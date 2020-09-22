@@ -1,0 +1,64 @@
+author:
+  name: name
+  phone: "08123123123"
+  email: email@email.com\
+
+# schedule:
+#   rule: "* */2 * * *"
+#   sender: "081356153892"
+#   message: "hello and good night!, hey want to know something ? you are awesome"
+
+default_greeting:
+  message: "to start talk with me type\n\n*!start*"
+  webhook:
+    service: WEBHOOK
+    url: https://stg-notif.efishery.com/webhook/input_sampling/log
+
+commands:
+  # never use hashtag (#) as preffix or word
+  prefix: "!"
+  # better without any space
+  command: "start"
+  # arg is separated by #
+  record: True
+  run_process: True
+  # reply with get from API messages
+  # request will be POST to https://api.com/result
+  # with body json
+  # { "argument": [] }
+  # API responses must HTTPS 200
+  # this will get the `message` key
+  # contoh message: halo {https://localhost:5000/dor}
+  message: "Let's start how cool you are"
+
+process:
+  timeout: 300
+  exit_command:
+    prefix: "!"
+    command: stop
+    message: "alright I'll stop asking"
+  end_message: "Hey its done, thank you"
+  questions:
+    - question:
+        slug: first
+        asking: please take a pic for the kolam
+        validation:
+          rule: image
+          message: harus gambar
+    - question:
+        slug: second
+        asking: sebuah pertanyaan lanjut setelah pertama ?
+        validation:
+          rule: ^[0-9]*$
+          message: hanya di perbolehkan angka
+    - question:
+        slug: third
+        asking: sebuah pertanyaan lanjut setelah kedua ?
+        validation:
+          rule: kg$
+          message: harus menggunakan akhiran satuan kg
+
+webhook:
+  service: DISCORD
+  url: https://discordapp.com/api/webhooks/469570451010617344/GVUOyyE93edzBHcofjUr29oaXMtnAyxozRnoK_YmrcFH76kG57xEq_qNK2gJpUqJk8iR
+

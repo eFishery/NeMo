@@ -1,0 +1,11 @@
+author:
+  name: name
+  phone: "08123123123"
+  email: email@email.com
+
+commands:
+  prefix: "!"
+  command: "mulai"
+  record: False
+  run_process: False
+  message: "Let's start how cool you are"

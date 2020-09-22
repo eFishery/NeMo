@@ -1,0 +1,12 @@
+author:
+  name: name
+  phone: "08123123123"
+  email: email@email.com
+
+schedule:
+  rule: "*/2 * * * *"
+  sender: "081356153892"
+  message: "This is the duplicate schedule"
+
+expected_users:
+  - 628986076558

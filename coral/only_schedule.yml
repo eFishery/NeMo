@@ -1,0 +1,12 @@
+author:
+  name: name
+  phone: "08123123123"
+  email: email@email.com
+
+schedule:
+  rule: "*/20 * * * *"
+  sender: "081356153892"
+  message: "hello and good night!, hey want to know something ? you are awesome"
+
+expected_users:
+  - 6285659289271
