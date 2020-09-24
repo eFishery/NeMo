@@ -1,7 +1,7 @@
 author:
   name: name
   phone: "08123123123"
-  email: email@email.com\
+  email: email@email.com
 
 # schedule:
 #   rule: "* */2 * * *"
@@ -18,7 +18,7 @@ commands:
   # never use hashtag (#) as preffix or word
   prefix: "!"
   # better without any space
-  command: "start"
+  command: "starting"
   # arg is separated by #
   record: True
   run_process: True
@@ -57,6 +57,12 @@ process:
         validation:
           rule: kg$
           message: harus menggunakan akhiran satuan kg
+    - question:
+        slug: keempat
+        asking: coba foto muka gantengnya bro ?
+        validation:
+          rule: image
+          message: harus gambar
 
 webhook:
   service: DISCORD

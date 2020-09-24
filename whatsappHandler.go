@@ -24,7 +24,7 @@ func (wh *waHandler)  HandleImageMessage(message whatsapp.ImageMessage) {
 		// need to test this
 		Sessions, err := loadSession(phone_number)
 		if err != nil {
-			go sendMessage(wh.c, "I don't know what you do but it do nothing", message.Info.RemoteJid)
+			go sendMessage(wh.c, "I don't know what you do but it does nothing", message.Info.RemoteJid)
 			return
 		}
 
@@ -193,11 +193,6 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 	// Check the message replied
 	if !(message.Info.Timestamp < wh.startTime) {
-
-		log.Println(message.Info.FromMe)
-		log.Println(message.Info.Source.Participant)
-		log.Println(message.Info.Source.PushName)
-		log.Println(message.Info.Timestamp)
 
 		// check the previous message who send the message, if bot, check the message, if still same, just keep silent, if not continue
 		// if user reply then can do

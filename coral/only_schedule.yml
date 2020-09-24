@@ -5,8 +5,7 @@ author:
 
 schedule:
   rule: "*/20 * * * *"
-  sender: "081356153892"
   message: "hello and good night!, hey want to know something ? you are awesome"
 
 expected_users:
-  - 6285659289271
+  - 628123123123

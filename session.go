@@ -34,7 +34,8 @@ func loadSession(phone_number string) (Session, error) {
 		log.Println("Create a new file")
 		file, _ := json.MarshalIndent(Session{}, "", " ")
 		_ = ioutil.WriteFile(fileSession(phone_number), file, 0644)
-		log.Fatal(err)		
+		log.Fatal(err)	
+		return s, fmt.Errorf("Session hasn't been created")	
 	}
 
 	jsonErr := json.Unmarshal(file_session, &s)
@@ -42,7 +43,7 @@ func loadSession(phone_number string) (Session, error) {
 		log.Fatal(jsonErr)
 	}
 
-	return s, fmt.Errorf("Session hasn't been created")
+	return s, nil
 }
 
 func saveSession(s Session, phone_number string) {

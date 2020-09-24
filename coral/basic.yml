@@ -1,0 +1,43 @@
+author:
+  name: name
+  phone: "08123123123"
+  email: email@email.com
+
+default_greeting:
+  message: "to start talk with me type\n\n*!start*"
+
+commands:
+  prefix: "!"
+  command: "start"
+  record: False
+  run_process: True
+  message: "Let's start how cool you are"
+
+process:
+  timeout: 300
+  exit_command:
+    prefix: "!"
+    command: stop
+    message: "alright I'll stop asking"
+  end_message: "Hey its done, thank you"
+  questions:
+    - question:
+        slug: first
+        asking: please take a pic your beautiful face
+        validation:
+          rule: image
+          message: "must a pic dude!"
+    - question:
+        slug: second
+        asking: tell me some random number
+        validation:
+          rule: ^[0-9]*$
+          message: you can't read that ? I number
+  
+webhook:
+  service: WEBHOOK
+  url: https://url.com/webhook
+
+expected_users:
+  - 628123123123
+  - 628123321123

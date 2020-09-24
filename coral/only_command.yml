@@ -5,7 +5,7 @@ author:
 
 commands:
   prefix: "!"
-  command: "mulai"
+  command: "fix"
   record: False
   run_process: False
   message: "Let's start how cool you are"
