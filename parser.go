@@ -6,14 +6,13 @@ import (
 	req "github.com/imroc/req"
 )
 
-func nemoParser(pesan string, Sessions Session) string{
+func nemoParser(pesan string, Sessions Session) (string, error){
 	for indexURL := 0; indexURL < strings.Count(pesan, "{{"); indexURL++ {
 		url := between(pesan, "{{", "}}")
 
 		r, err := req.Post(url, req.BodyJSON(Sessions))
 		if err != nil {
-			log.Fatal(err)
-			return "timeout"
+			return "error occured, try again", err 
 		}
 
 		var pF pesanFetch
@@ -26,5 +25,5 @@ func nemoParser(pesan string, Sessions Session) string{
 		log.Println(pesan)
 	}
 
-	return pesan
+	return pesan, nil
 }

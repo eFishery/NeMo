@@ -9,7 +9,7 @@ default_greeting:
 commands:
   prefix: "!"
   command: "start"
-  record: False
+  record: True
   run_process: True
   message: "Let's start how cool you are"
 
@@ -32,7 +32,7 @@ process:
         asking: tell me some random number
         validation:
           rule: ^[0-9]*$
-          message: you can't read that ? I number
+          message: you can't read that ? I ask you to write some number
   
 webhook:
   service: WEBHOOK
@@ -40,4 +40,4 @@ webhook:
 
 expected_users:
   - 628123123123
-  - 628123321123
+  - 62812312312311

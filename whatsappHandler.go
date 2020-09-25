@@ -21,56 +21,57 @@ func (wh *waHandler)  HandleImageMessage(message whatsapp.ImageMessage) {
 		phone_number := strings.Split(message.Info.RemoteJid, "@")[0]
 
 		// if the user suddenly sent the image this will trigger error because there is no available session
-		// need to test this
 		Sessions, err := loadSession(phone_number)
 		if err != nil {
-			go sendMessage(wh.c, "I don't know what you do but it does nothing", message.Info.RemoteJid)
+			log.Println(phone_number + " sent me image but it does nothing")
 			return
 		}
 
-		var coral Coral
-		coral.getCoral(Sessions.CurrentProcess)
-		sIndex := Sessions.CurrentQuestionSlug
-
-		// prevent for user put image on any rule
-		if coral.Process.Questions[sIndex].Question.Validation.Rule != "image" {
-			go sendMessage(wh.c, coral.Process.Questions[sIndex].Question.Validation.Message, message.Info.RemoteJid)
-		}
-
-		data, err := message.Download()
-		if err != nil {
-			if err != whatsapp.ErrMediaDownloadFailedWith410 && err != whatsapp.ErrMediaDownloadFailedWith404 {
-				return
-			}
-			if _, err = wh.c.LoadMediaInfo(message.Info.RemoteJid, message.Info.Id, strconv.FormatBool(message.Info.FromMe)); err == nil {
-				data, err = message.Download()
-				if err != nil {
-					return
-				}
-			}
-		}
-		filename := fmt.Sprintf("%v/%v.%v", os.TempDir(), message.Info.Id, strings.Split(message.Type, "/")[1])
-		file, err := os.Create(filename)
-		defer file.Close()
-		if err != nil {
+		if Sessions.CurrentProcess == "" {
+			log.Println(phone_number + " sent me image but it does nothing")
 			return
 		}
-		_, err = file.Write(data)
-		if err != nil {
-			return
-		}
-		log.Printf("%v %v\n\timage received, saved at:%v\n", message.Info.Timestamp, message.Info.RemoteJid, filename)
-		
-		uploadS3 := AddFileToS3(filename)
-
-		log.Println("Files Uploaded and here is the link : " + uploadS3)
 
 		if Sessions.ProcessStatus == "WAIT_ANSWER" {
-			reply := "terminate"
-			sIndex := Sessions.CurrentQuestionSlug
 
 			var coral Coral
 			coral.getCoral(Sessions.CurrentProcess)
+			sIndex := Sessions.CurrentQuestionSlug
+
+			// prevent for user put image on any rule
+			if coral.Process.Questions[sIndex].Question.Validation.Rule != "image" {
+				go sendMessage(wh.c, coral.Process.Questions[sIndex].Question.Validation.Message, message.Info.RemoteJid)
+			}
+
+			data, err := message.Download()
+			if err != nil {
+				if err != whatsapp.ErrMediaDownloadFailedWith410 && err != whatsapp.ErrMediaDownloadFailedWith404 {
+					return
+				}
+				if _, err = wh.c.LoadMediaInfo(message.Info.RemoteJid, message.Info.Id, strconv.FormatBool(message.Info.FromMe)); err == nil {
+					data, err = message.Download()
+					if err != nil {
+						return
+					}
+				}
+			}
+			filename := fmt.Sprintf("%v/%v.%v", os.TempDir(), message.Info.Id, strings.Split(message.Type, "/")[1])
+			file, err := os.Create(filename)
+			defer file.Close()
+			if err != nil {
+				return
+			}
+			_, err = file.Write(data)
+			if err != nil {
+				return
+			}
+			log.Printf("%v %v\n\timage received, saved at:%v\n", message.Info.Timestamp, message.Info.RemoteJid, filename)
+			
+			uploadS3 := AddFileToS3(filename)
+
+			log.Println("Files Uploaded and here is the link : " + uploadS3)
+			
+			reply := "terminate"
 
 			waktu, err := time.Parse(time.RFC3339, Sessions.Expired)
 
@@ -115,9 +116,15 @@ func (wh *waHandler)  HandleImageMessage(message whatsapp.ImageMessage) {
 			if coral.Commands.Record {
 				switch coral.Webhook.Service {
 				case "DISCORD":
-					SentToDiscord(coral.Webhook.URL, Sessions)
+					_, errSent := SentToDiscord(coral.Webhook.URL, Sessions)
+					if errSent != nil {
+						log.Println(errSent.Error())
+					}
 				case "WEBHOOK":
-					SentToWebhook(coral.Webhook.URL, Sessions)
+					_, errSent := SentToWebhook(coral.Webhook.URL, Sessions)
+					if errSent != nil {
+						log.Println(errSent.Error())
+					}
 				}
 			}
 
@@ -126,11 +133,11 @@ func (wh *waHandler)  HandleImageMessage(message whatsapp.ImageMessage) {
 					go sendMessage(wh.c, reply, message.Info.RemoteJid)
 
 					if Sessions.ProcessStatus != "DONE" {
+						log.Println(Sessions.ProcessStatus)
 						Sessions.ProcessStatus = "WAIT_ANSWER"
 					}
 
-					file, _ := json.MarshalIndent(Sessions, "", " ")
-					_ = ioutil.WriteFile(fileSession(phone_number), file, 0644)
+					go saveSession(Sessions, phone_number)
 				}
 			}
 		}
@@ -170,7 +177,11 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 			}
 		}
 
-		reply = nemoParser(BuildCommands[index].Message, Sessions)
+		reply, parserErr := nemoParser(BuildCommands[index].Message, Sessions)
+		if parserErr != nil {
+			log.Println(parserErr.Error())
+			return
+		}
 
 		if reply != "timeout" {
 			go sendMessage(wh.c, reply, message.Info.RemoteJid)
@@ -198,19 +209,15 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		// if user reply then can do
 		
 		phone_number := strings.Split(message.Info.RemoteJid, "@")[0]
-		file_session, err := ioutil.ReadFile(fileSession(phone_number))
+		Sessions, err := loadSession(phone_number)
 		if err != nil {
-			log.Println(err)
-			log.Println("Create a new file")
-			file, _ := json.MarshalIndent(Sessions, "", " ")
-			_ = ioutil.WriteFile(fileSession(phone_number), file, 0644)
 			go greeting(wh.c, message.Info.RemoteJid, message.Text)
 			return
 		}
 
-		jsonErr := json.Unmarshal(file_session, &Sessions)
-		if jsonErr != nil {
-			log.Fatal(jsonErr)
+		if Sessions.CurrentProcess == "" {
+			go greeting(wh.c, message.Info.RemoteJid, message.Text)
+			return
 		}
 
 		if Sessions.ProcessStatus == "DONE" || Sessions.ProcessStatus == "" {
@@ -283,14 +290,18 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 			go saveSession(Sessions, phone_number)
 
-			url := coral.Webhook.URL
-
 			if coral.Commands.Record {
 				switch coral.Webhook.Service {
 				case "DISCORD":
-					SentToDiscord(url, Sessions)
+					_, errSent := SentToDiscord(coral.Webhook.URL, Sessions)
+					if errSent != nil {
+						log.Println(errSent.Error())
+					}
 				case "WEBHOOK":
-					SentToWebhook(url, Sessions)
+					_, errSent := SentToWebhook(coral.Webhook.URL, Sessions)
+					if errSent != nil {
+						log.Println(errSent.Error())
+					}
 				}
 			}
 
@@ -309,22 +320,6 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		}
 	}
 	return
-}
-
-//HandleError needs to be implemented to be a valid WhatsApp handler
-func (h *waHandler) HandleError(err error) {
-	if e, ok := err.(*whatsapp.ErrConnectionFailed); ok {
-		log.Printf("Connection failed, underlying error: %v", e.Err)
-		log.Println("Waiting 30sec...")
-		<-time.After(30 * time.Second)
-		log.Println("Reconnecting...")
-		err := h.c.Restore()
-		if err != nil {
-			log.Fatalf("Restore failed: %v", err)
-		}
-	} else {
-		log.Printf("error occoured: %v\n", err)
-	}
 }
 
 func currently_it_do_nothing(wac *whatsapp.Conn, RJID string) {
@@ -371,9 +366,15 @@ func greeting(wac *whatsapp.Conn, RJID string, message string){
 
 				switch BuildGreetings[gIndex].Webhook.Service {
 				case "DISCORD":
-					LogToDiscord(url, logGreeting)
+					_, LogErr := LogToDiscord(url, logGreeting)
+					if LogErr != nil {
+						log.Println("Fail to Log : " + LogErr.Error())
+					}
 				case "WEBHOOK":
-					LogToWebhook(url, logGreeting)
+					_, LogErr := LogToWebhook(url, logGreeting)
+					if LogErr != nil {
+						log.Println("Fail to Log : " + LogErr.Error())
+					}
 				}
 
 				go sendMessage(wac, BuildGreetings[gIndex].Message, RJID)

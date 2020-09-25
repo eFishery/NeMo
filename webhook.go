@@ -5,18 +5,18 @@ import (
 	req "github.com/imroc/req"
 )
 
-func SentToWebhook(url string, Sessions Session) int {
+func SentToWebhook(url string, Sessions Session) (int, error) {
 	r, err := req.Post(url, req.BodyJSON(Sessions))
 	if err != nil {
-		log.Fatal(err)
+		return 500, err
 	}
 
 	resp := r.Response()
 
-	return resp.StatusCode
+	return resp.StatusCode, nil
 }
 
-func SentToDiscord(url string, Sessions Session) bool {
+func SentToDiscord(url string, Sessions Session) (bool, error) {
 	// req.Debug = true
 	compiled_message := "\n[" + Sessions.Created + "]\n" + Sessions.CurrentProcess
 	for index := range(Sessions.Datas) {
@@ -31,24 +31,24 @@ func SentToDiscord(url string, Sessions Session) bool {
 	_, err := req.Post(url, req.BodyJSON(Discord))
 
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 
-	return true
+	return true, nil
 }
 
-func LogToWebhook(url string, logGreeting LogGreeting) int {
+func LogToWebhook(url string, logGreeting LogGreeting) (int, error) {
 	r, err := req.Post(url, req.BodyJSON(logGreeting))
 	if err != nil {
-		log.Fatal(err)
+		return 500, err
 	}
 
 	resp := r.Response()
 
-	return resp.StatusCode
+	return resp.StatusCode, nil
 }
 
-func LogToDiscord(url string, logGreeting LogGreeting) bool {
+func LogToDiscord(url string, logGreeting LogGreeting) (bool, error) {
 	// req.Debug = true
 	compiled_message := logGreeting.PhoneNumber + " replied with " + logGreeting.Message
 
@@ -58,8 +58,9 @@ func LogToDiscord(url string, logGreeting LogGreeting) bool {
 	_, err := req.Post(url, req.BodyJSON(Discord))
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println("ERROR: "+ err.Error())
+		return false, err
 	}
 
-	return true
+	return true, nil
 }

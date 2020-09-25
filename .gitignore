@@ -1,6 +1,9 @@
 .build
+.builder
 .env
 .compile
 
 sessions
 .sessions
+
+build.sh

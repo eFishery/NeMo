@@ -41,6 +41,12 @@ func init() {
 
 func main() {
 
+	if len(os.Args) < 2 {
+		log.Fatal("You need to specify the phone number/ file session")
+	}
+
+	sender := os.Args[1]
+
 	Settings = LoadSetting()
 
 	builder()
@@ -53,8 +59,6 @@ func main() {
 	if !cmds {
 		return
 	}
-
-	sender := os.Args[1]
 
 	wac, err := whatsapp.NewConn(5 * time.Second)
 	// wac.SetClientVersion(0, 4, 2080)
@@ -216,4 +220,20 @@ func exit(wac *whatsapp.Conn, phone_number string) {
 		log.Fatalf("error saving session: %v", err)
 	}
 	os.Exit(1)
+}
+
+//HandleError needs to be implemented to be a valid WhatsApp handler
+func (h *waHandler) HandleError(err error) {
+	if e, ok := err.(*whatsapp.ErrConnectionFailed); ok {
+		log.Printf("Connection failed, underlying error: %v", e.Err)
+		log.Println("Waiting 30sec...")
+		<-time.After(30 * time.Second)
+		log.Println("Reconnecting...")
+		err := h.c.Restore()
+		if err != nil {
+			log.Fatalf("Restore failed: %v", err)
+		}
+	} else {
+		log.Printf("error occoured: %v\n", err)
+	}
 }
