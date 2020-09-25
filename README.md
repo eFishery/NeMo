@@ -28,6 +28,17 @@ after you have file `08123123123.gob` and `coral` directory with `basic.yml` ins
 
 this will find the file `08123123123.gob` in the `SESSION_DIR` environment variable by default this will goes to current directory running file
 
+# Run With Docker
+
+you must prepare the `coral` directory include with yaml file and Whatsapp file session, after that mount volume in docker with example command like this
+
+```
+docker run \
+--name NeMo -v ~/work/opensource/NeMo/coral:/app/coral \
+-v ~/work/opensource/NeMo/.sessions/08123123123.gob:/app/08123123123.gob \
+k1m0ch1/nemo 08123123123
+```
+
 ## Understand Basic Coral Configuration
 
 Coral as in the house of the clown fish, is the configuration of the bot in order to specific give the operation to NeMo, you can see the example from the `basic.yml` or `example.yml` file
