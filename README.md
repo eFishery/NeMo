@@ -18,7 +18,9 @@ or
 
 run with docker 
 
-`docker run --rm -v sessions:/go/src/github.com/k1m0ch1/WhatsappLogin/sessions k1m0ch1/whatsapplogin:latest -p 08123123123`
+```
+docker run --rm -v sessions:/go/src/github.com/k1m0ch1/WhatsappLogin/sessions k1m0ch1/whatsapplogin:latest -p 08123123123
+```
 
 after you have file `08123123123.gob` and `coral` directory with `basic.yml` inside, run the NeMo with this command 
 
@@ -178,7 +180,9 @@ or
 
 run with docker 
 
-`docker run --rm -v sessions:/go/src/github.com/k1m0ch1/WhatsappLogin/sessions k1m0ch1/whatsapplogin:latest -p 08123123123`
+```
+docker run --rm -v sessions:/go/src/github.com/k1m0ch1/WhatsappLogin/sessions k1m0ch1/whatsapplogin:latest -p 08123123123
+```
 
 
 # Development Environment
