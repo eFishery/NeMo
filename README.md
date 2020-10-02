@@ -36,8 +36,8 @@ you must prepare the `coral` directory include with yaml file and Whatsapp file 
 
 ```
 docker run \
---name NeMo -v ~/work/opensource/NeMo/coral:/app/coral \
--v ~/work/opensource/NeMo/.sessions/08123123123.gob:/app/08123123123.gob \
+--name NeMo -v $(pwd)/coral:/app/coral \
+-v $(pwd)/.sessions/08123123123.gob:/app/08123123123.gob \
 k1m0ch1/nemo 08123123123
 ```
 
