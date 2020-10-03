@@ -19,9 +19,10 @@ var (
 func TestNemoParser(t *testing.T) {
 	setupTestNemoParser(t)
 	tests := []struct {
-		name  string
-		pesan string
-		res   string
+		name   string
+		pesan  string
+		res    string
+		config string
 	}{
 		{
 			name:  "one_url",
@@ -34,9 +35,10 @@ func TestNemoParser(t *testing.T) {
 			res:   fmt.Sprintf("hello 1 hello %s", errRespNotSupported(testURL2)),
 		},
 		{
-			name:  "three_url",
-			pesan: fmt.Sprintf("hello {{%s}} hello {{%s}} hello {{%s}}", testURL1, testURL2, testURL3),
-			res:   fmt.Sprintf("hello 1 hello %s hello %s", errRespNotSupported(testURL2), errRespNotSupported(testURL3)),
+			name:   "three_url_from_file",
+			pesan:  fmt.Sprintf("hello {{%s}} hello {{%s}} hello {{%s}}", testURL1, testURL2, testURL3),
+			res:    "hello 1 hello 2 hello 3",
+			config: "config/keys-example.json",
 		},
 	}
 	sess := Session{
@@ -54,6 +56,7 @@ func TestNemoParser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			os.Setenv(defSupportedRespKeysConfig, tt.config)
 			pesan, err := nemoParser(tt.pesan, sess)
 			if err != nil {
 				t.Error(err)
