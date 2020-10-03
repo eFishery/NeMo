@@ -10,8 +10,6 @@ import (
 )
 
 // Test if filename is a valid yaml file (ends with `yml` or `yaml`).
-// If it's matching then returns two strings: filename and extension
-// If it's not matching these values are empty
 func matchYAMLFile(filename string) bool {
   re := regexp.MustCompile(`^.*\.(ya?ml)$`)
   match := re.MatchString(filename)
