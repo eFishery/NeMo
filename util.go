@@ -30,7 +30,7 @@ func LoadSetting() *Setting {
     if _, err := os.Stat(pwd + "/coral"); os.IsNotExist(err) {
 		os.MkdirAll(pwd + "/coral", os.ModePerm)
     }
-    
+
     if _, err := os.Stat(pwd + "/.build/sessions/image"); os.IsNotExist(err) {
 		os.MkdirAll(pwd + "/.build/sessions", os.ModePerm)
     }
@@ -129,7 +129,7 @@ func AddFileToS3(fileDir string) string {
 }
 
 func (c *Coral) getCoral(filename string) *Coral {
-    yamlFile, err := ioutil.ReadFile( Settings.CoralDir + "/" + filename + ".yml")
+    yamlFile, err := ioutil.ReadFile( Settings.CoralDir + "/" + filename)
     if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
     }

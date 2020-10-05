@@ -7,11 +7,18 @@ import (
 	"fmt"
 	"regexp"
 	"encoding/json"
-	"strings"
 )
 
+// Test if filename is a valid yaml file (ends with `yml` or `yaml`).
+func matchYAMLFile(filename string) bool {
+  re := regexp.MustCompile(`^.*\.(ya?ml)$`)
+  match := re.MatchString(filename)
+  return match
+}
+
+
 func builder() {
-	linter := builder_linter_all() 
+	linter := builder_linter_all()
 	if len(linter) > 0 {
 		for i:= range(linter){
 			log.Println(linter[i])
@@ -27,13 +34,12 @@ func builder() {
 	for _, file := range files {
 		saveToCommand := true
 		saveToSchedule := true
-		match, _ := regexp.MatchString(`^.*\.(yml)$`, file.Name())
-		if match {
+		if matchYAMLFile(file.Name()) {
 			log.Println("Build file " + file.Name())
-			processName := strings.Split(file.Name(), ".yml")[0]
+			processName := file.Name()
 			var coral Coral
 			coral.getCoral(processName)
-			
+
 			var commandCompile = BuildCommand {
 				Prefix: coral.Commands.Prefix,
 				Command: coral.Commands.Command,
@@ -96,7 +102,7 @@ func builder() {
 			}
 
 		}else{
-			log.Println("Skip file " + file.Name() + " is not ended with .yml")
+			log.Println("Skip file " + file.Name() + " is not ended with .yml nor .yaml")
 		}
 	}
 
@@ -116,11 +122,10 @@ func builder_linter_all() []string {
 	var result []string
 	files,_ := ioutil.ReadDir(Settings.CoralDir)
 	for _, file := range files {
-		match, _ := regexp.MatchString(`^.*\.(yml)$`, file.Name())
-		if match {
+		if matchYAMLFile(file.Name()) {
 			var coral Coral
-			
-			coral.getCoral(strings.Split(file.Name(), ".yml")[0])
+
+			coral.getCoral(file.Name())
 
 			if !coral.valAuthor() {
 				result = append(result, file.Name() + ": Author must complete")
@@ -142,15 +147,15 @@ func builder_linter_all() []string {
 				if coral.Process.ExitCommand.Command == "" || coral.Process.ExitCommand.Prefix == "" || coral.Process.ExitCommand.Message == ""{
 					result = append(result, file.Name() + ": You must set exit command value in process")
 				}
-				
+
 				if coral.Process.Timeout == 0 {
 					result = append(result, file.Name() + ": You must set a value for timeout second in process")
 				}
-			
+
 				if len(coral.Process.Questions) == 0 {
 					result = append(result, file.Name() + ": You need to have a question in process")
 				}
-			
+
 				if coral.Process.EndMessage == "" {
 					result = append(result, file.Name() + ": You need to set a value for End Message in process")
 				}
@@ -163,7 +168,7 @@ func builder_linter_all() []string {
 			}
 
 		}else{
-			log.Println("Skip file " + file.Name() + " is not ended with .yml")
+			log.Println("Skip file " + file.Name() + " is not ended with .yml nor .yaml")
 		}
 	}
 	return result
