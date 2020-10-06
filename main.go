@@ -1,28 +1,27 @@
 package main
 
 import (
+	"bytes"
 	"encoding/gob"
-	"math/rand"
-	"os/signal"
-
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
-	"time"
+	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	whatsapp "github.com/Rhymen/go-whatsapp"
-	cron "github.com/robfig/cron/v3"
 	godotenv "github.com/joho/godotenv"
+	cron "github.com/robfig/cron/v3"
 	// "github.com/davecgh/go-spew/spew"
 )
 
 type waHandler struct {
 	c         *whatsapp.Conn
 	startTime uint64
-	chats map[string]struct{}
-
+	chats     map[string]struct{}
 }
 
 var Schedules []Schedule
@@ -34,9 +33,9 @@ var BuildCommands []BuildCommand
 var BuildGreetings []BuildGreeting
 
 func init() {
-    if err := godotenv.Load(); err != nil {
-        log.Print("No .env file found")
-    }
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
 }
 
 func main() {
@@ -79,20 +78,20 @@ func main() {
 	if !pong || err != nil {
 		log.Fatalf("error pinging in: %v\n", err)
 	}
-	
+
 	schedule := readScheduleFiles()
 	if !schedule {
 		log.Println("Can't read Schedule Files")
 		return
 	}
 
-	for index := range(Schedules) {
+	for index := range Schedules {
 		phone_numbers := Schedules[index].ExpectedUsers
 		process_name := Schedules[index].ProcessName
 		log.Println("Read the schedule to run with cron formula " + Schedules[index].Rule)
-		jadwal.AddFunc(Schedules[index].Rule, func(){
+		jadwal.AddFunc(Schedules[index].Rule, func() {
 			log.Println("Run Schedule " + process_name)
-			for pIndex := range(phone_numbers) {
+			for pIndex := range phone_numbers {
 				go sendMessage(wac, Schedules[index].Message, phone_numbers[pIndex])
 			}
 		})
@@ -118,7 +117,6 @@ func main() {
 }
 
 func sendMessage(wac *whatsapp.Conn, message string, RJID string) {
-
 	msg := whatsapp.TextMessage{
 		Info: whatsapp.MessageInfo{
 			RemoteJid: RJID,
@@ -135,17 +133,37 @@ func sendMessage(wac *whatsapp.Conn, message string, RJID string) {
 	// if min is 2 then 2 + (50/2) = 27
 	// if max is 4 then 4 + (50/2) = 29
 	// if 29 > 5 then max is 5
-	min = min + (len(kata)/2)
-	max = max + (len(kata)/2)
+	min = min + (len(kata) / 2)
+	max = max + (len(kata) / 2)
 	if max > limit_max {
 		min = limit_max - 2
 		max = limit_max
 	}
-	waitSec := rand.Intn(max-min)+min
+	waitSec := rand.Intn(max-min) + min
 	log.Printf("Randomly paused %d for throtling", waitSec)
 	wac.Presence(RJID, whatsapp.PresenceComposing)
 	time.Sleep(time.Duration(waitSec) * time.Second)
 
+	msgId, err := wac.Send(msg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error sending message: %v", err)
+	} else {
+		fmt.Println("Message Sent -> ID : " + msgId)
+	}
+}
+
+func sendImageMessage(wac *whatsapp.Conn, img ImageMessage, RJID string) {
+	msg := whatsapp.ImageMessage{
+		Info: whatsapp.MessageInfo{
+			RemoteJid: RJID,
+		},
+		Caption:   img.Caption,
+		Thumbnail: img.Thumbnail,
+		Type:      img.Type,
+		Content:   bytes.NewReader(img.Content),
+	}
+
+	wac.Presence(RJID, whatsapp.PresenceComposing)
 	msgId, err := wac.Send(msg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error sending message: %v", err)

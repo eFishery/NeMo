@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	req "github.com/imroc/req"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	wa "github.com/Rhymen/go-whatsapp"
+	"github.com/imroc/req"
 )
 
 var (
@@ -23,38 +25,85 @@ var (
 	errRespNotSupported = func(dst string) string { return fmt.Sprintf("[resp not supported error: %s]", dst) }
 )
 
+type ImageMessage struct {
+	Caption   string
+	Thumbnail []byte // set to nil, add on your own as I have no way to test this
+	Type      string
+	Content   []byte
+}
+
 // nemoParser parses pesan for URL in {{url}} format
 // if no URL is found in pesan, pesan is returned as is
 // if URL is found, try POST request to url
+// if response contains supported JSON, pesan will be replaced with response
 // currently only supports JSON response with message key
-func nemoParser(pesan string, Sessions Session) (string, error) {
+// if response contains image(s), image with caption will be sent instead of text
+// if there are multiple URL that return images, it will send all images, only captioning the last image
+// currently if duplicate URLs exist, the request will be repeated
+func nemoParser(pesan string, Sessions Session) (*wa.TextMessage, map[int]ImageMessage, error) {
+	var countImg int
+	txt := &wa.TextMessage{}
+	mapImgs := make(map[int]ImageMessage)
 	urlCount := strings.Count(pesan, "{{")
 	if urlCount == 0 {
-		return pesan, nil
+		txt.Text = pesan
+		return txt, nil, nil
 	}
 	for i := 0; i < urlCount; i++ {
 		url := between(pesan, "{{", "}}")
-		r, err := req.Post(url, req.BodyJSON(Sessions))
+		resp, err := req.Post(url, req.BodyJSON(Sessions))
 		if err != nil {
-			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errReqErr(url), -1)
+			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errReqErr(url), 1)
 		}
 
-		var m map[string]interface{}
-		r.ToJSON(&m)
+		// check if json/image/else
+		switch ct := resp.Response().Header.Get("Content-Type"); ct {
+		case "application/json":
+			var m map[string]interface{}
+			resp.ToJSON(&m)
 
-		// TODO maybe calls this in main to setup
-		sk := supportKey(os.Getenv(defSupportedRespKeysConfig))
-		k := lookupKey(m, sk)
-		if k == "" {
-			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errRespNotSupported(url), -1)
-			continue
-		}
-		if m[k] != "" {
-			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), fmt.Sprintf("%v", m[k]), -1)
+			// TODO maybe calls this in main to setup
+			sk := supportKey(os.Getenv(defSupportedRespKeysConfig))
+			k := lookupKey(m, sk)
+			if k == "" {
+				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errRespNotSupported(url), 1)
+				txt.Text = pesan
+				continue
+			}
+			if m[k] != "" {
+				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), fmt.Sprintf("%v", m[k]), 1)
+			}
+			// if there is image, simply remove URL
+			if len(mapImgs) > 0 {
+				continue
+			}
+			txt.Text = pesan
+		default:
+			if strings.Contains(ct, "image") {
+				b, err := resp.ToBytes()
+				if err != nil {
+					pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errReqErr(url), 1)
+					continue
+				}
+				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), "", 1)
+				mapImgs[countImg] = ImageMessage{
+					Content: b,
+					Type:    ct,
+				}
+				countImg++
+				continue
+			}
+			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errRespNotSupported(url), 1)
 		}
 	}
+	if len(mapImgs) > 0 {
+		lastImg := mapImgs[countImg-1]
+		lastImg.Caption = pesan
+		mapImgs[countImg-1] = lastImg
+		return nil, mapImgs, nil
+	}
 
-	return pesan, nil
+	return txt, nil, nil
 }
 
 // lookupKey looks up if key exists in a map based on priority
@@ -68,7 +117,7 @@ func nemoParser(pesan string, Sessions Session) (string, error) {
 func lookupKey(m map[string]interface{}, sup map[string]int) string {
 	var key string
 	var prio int
-	for k, _ := range m {
+	for k := range m {
 		for v, p := range sup {
 			if k != v {
 				continue
