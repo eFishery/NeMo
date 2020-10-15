@@ -2,6 +2,7 @@
 .builder
 .env
 .compile
+.dev
 
 sessions
 .sessions

@@ -167,7 +167,7 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 		if len(coral.ExpectedUsers) > 0 {
 			for usersIndex := range(coral.ExpectedUsers) {
-				if coral.ExpectedUsers[usersIndex] == phone_number {
+				if coral.ExpectedUsers[usersIndex] == phone_number || coral.ExpectedUsers[usersIndex] == "any" {
 					break
 				}
 				if len(coral.ExpectedUsers)-1 == usersIndex {
@@ -204,6 +204,8 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 	// Check the message replied
 	if !(message.Info.Timestamp < wh.startTime) {
+
+		log.Println(message.Info.RemoteJid + ": " + message.Text)
 
 		// check the previous message who send the message, if bot, check the message, if still same, just keep silent, if not continue
 		// if user reply then can do
@@ -356,7 +358,11 @@ func (wh *waHandler) HandleContactMessage(message whatsapp.ContactMessage) {
 func greeting(wac *whatsapp.Conn, RJID string, message string){
 	for gIndex := range(BuildGreetings) {
 		for pIndex := range(BuildGreetings[gIndex].ExpectedUsers) {
-			if(BuildGreetings[gIndex].ExpectedUsers[pIndex] == RJID){
+			if(strings.Split(RJID, "@")[1] == "g.us" && BuildGreetings[gIndex].ExpectedUsers[pIndex] == "any"){
+				fmt.Println("The any default message is enabled, and only accepted by direct message")
+				return
+			}
+			if(BuildGreetings[gIndex].ExpectedUsers[pIndex] == RJID || BuildGreetings[gIndex].ExpectedUsers[pIndex] == "any"){
 				url := BuildGreetings[gIndex].Webhook.URL
 
 				logGreeting := LogGreeting {

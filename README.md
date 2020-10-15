@@ -58,7 +58,7 @@ author:
 
 ### Default Greeting
 
-This will be triggered when users chat any text to NeMo and start to send `message`
+This will be triggered when users chat any text to NeMo and start to send `message` and expected by the variable `expected_users`
 
 ```YAML
 default_greeting:
@@ -164,6 +164,13 @@ is a list of a phone number that expected by ChatBot, technically a whitelist th
 expected_users:
   - 628123123123
   - 628321321312
+```
+
+you can set the `expected_users` to `any` so this will targeted the `any` user for `command` and `default_greeting` but the `schedules` will be disabled due to `any` users
+
+```YAML
+expected_users:
+  - any
 ```
 
 in order for NeMo can run within WhatsApp, you need the whatsapp file session
