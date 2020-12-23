@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"path/filepath"
@@ -53,7 +53,7 @@ func LoadSetting() *Setting {
 }
 
 
-func between(value string, a string, b string) string {
+func Between(value string, a string, b string) string {
     // Get substring between two strings.
     posFirst := strings.Index(value, a)
     if posFirst == -1 {
@@ -70,7 +70,7 @@ func between(value string, a string, b string) string {
     return value[posFirstAdjusted:posLast]
 }
 
-func after(value string, a string) string {
+func After(value string, a string) string {
     // Get substring after a string.
     pos := strings.LastIndex(value, a)
     if pos == -1 {
@@ -83,7 +83,7 @@ func after(value string, a string) string {
     return value[adjustedPos:len(value)]
 }
 
-func AddFileToS3(fileDir string) string {
+func (Settings *Setting) AddFileToS3(fileDir string) string {
 
 	creds := credentials.NewStaticCredentials(Settings.AwsAccessKeyId, Settings.AwsSecretAccessKey, "")
 	_, err := creds.Get()
@@ -128,8 +128,9 @@ func AddFileToS3(fileDir string) string {
 	return Settings.AwsS3EndpointUrl + Settings.AwsS3Dir + fileName
 }
 
-func (c *Coral) getCoral(filename string) *Coral {
-    yamlFile, err := ioutil.ReadFile( Settings.CoralDir + "/" + filename)
+func (c *Coral) GetCoral(filename string) *Coral {
+    Settings := LoadSetting()
+    yamlFile, err := ioutil.ReadFile(Settings.CoralDir + "/" + filename)
     if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
     }
@@ -141,22 +142,28 @@ func (c *Coral) getCoral(filename string) *Coral {
     return c
 }
 
-func readScheduleFiles() bool{
+func ReadScheduleFiles() (bool, []Schedule){
+    var Schedules []Schedule
+
+    Settings := LoadSetting()
 	content, err := ioutil.ReadFile(Settings.BuildDir + "/schedules.json")
     if err != nil {
         log.Fatal(err)
     }
-
+    
 	jsonErr := json.Unmarshal(content, &Schedules)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
 
-	return true
+	return true, Schedules
 
 }
 
-func readBuildCommandsFiles() bool{
+func ReadBuildCommandsFiles() []BuildCommand {
+    var BuildCommands []BuildCommand
+
+    Settings := LoadSetting()
 	content, err := ioutil.ReadFile(Settings.BuildDir + "/commands.json")
     if err != nil {
         os.OpenFile(Settings.BuildDir + "/commands.json", os.O_RDONLY|os.O_CREATE, 0755)
@@ -168,11 +175,14 @@ func readBuildCommandsFiles() bool{
 		log.Fatal(jsonErr)
 	}
 
-	return true
+	return BuildCommands
 
 }
 
-func readGreetingsFile() bool{
+func ReadGreetingsFile() []BuildGreeting{
+    var BuildGreetings []BuildGreeting
+
+    Settings := LoadSetting()
 	content, err := ioutil.ReadFile(Settings.BuildDir + "/greetings.json")
     if err != nil {
         os.OpenFile(Settings.BuildDir + "/greetings.json", os.O_RDONLY|os.O_CREATE, 0755)
@@ -182,14 +192,14 @@ func readGreetingsFile() bool{
 	jsonErr := json.Unmarshal(content, &BuildGreetings)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
-	}
-
-	return true
-
+    }
+    
+    return BuildGreetings
 }
 
 
-func fileSession(phone_number string) string {
+func FileSession(phone_number string) string {
+    Settings := LoadSetting()
     return Settings.BuildDir + "/sessions/" + phone_number + ".session"
 }
 

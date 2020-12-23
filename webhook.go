@@ -3,9 +3,11 @@ package main
 import (
 	"log"
 	req "github.com/imroc/req"
+
+	"github.com/eFishery/NeMo/utils"
 )
 
-func SentToWebhook(url string, Sessions Session) (int, error) {
+func SentToWebhook(url string, Sessions utils.Session) (int, error) {
 	r, err := req.Post(url, req.BodyJSON(Sessions))
 	if err != nil {
 		return 500, err
@@ -16,7 +18,7 @@ func SentToWebhook(url string, Sessions Session) (int, error) {
 	return resp.StatusCode, nil
 }
 
-func SentToDiscord(url string, Sessions Session) (bool, error) {
+func SentToDiscord(url string, Sessions utils.Session) (bool, error) {
 	// req.Debug = true
 	compiled_message := "\n[" + Sessions.Created + "]\n" + Sessions.CurrentProcess
 	for index := range(Sessions.Datas) {
@@ -25,7 +27,7 @@ func SentToDiscord(url string, Sessions Session) (bool, error) {
 		compiled_message = compiled_message + "\n" + Sessions.PhoneNumber + ": " + Sessions.Datas[index].Answer
 	}
 
-	var Discord = discord {
+	var Discord = utils.Discord {
 		Content: compiled_message,
 	}
 	_, err := req.Post(url, req.BodyJSON(Discord))
@@ -37,7 +39,7 @@ func SentToDiscord(url string, Sessions Session) (bool, error) {
 	return true, nil
 }
 
-func LogToWebhook(url string, logGreeting LogGreeting) (int, error) {
+func LogToWebhook(url string, logGreeting utils.LogGreeting) (int, error) {
 	r, err := req.Post(url, req.BodyJSON(logGreeting))
 	if err != nil {
 		return 500, err
@@ -48,11 +50,11 @@ func LogToWebhook(url string, logGreeting LogGreeting) (int, error) {
 	return resp.StatusCode, nil
 }
 
-func LogToDiscord(url string, logGreeting LogGreeting) (bool, error) {
+func LogToDiscord(url string, logGreeting utils.LogGreeting) (bool, error) {
 	// req.Debug = true
 	compiled_message := logGreeting.PhoneNumber + " replied with " + logGreeting.Message
 
-	var Discord = discord {
+	var Discord = utils.Discord {
 		Content: compiled_message,
 	}
 	_, err := req.Post(url, req.BodyJSON(Discord))

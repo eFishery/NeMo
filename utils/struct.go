@@ -1,4 +1,4 @@
-package main
+package utils
 
 
 type Setting struct {
@@ -108,7 +108,7 @@ type Session struct {
 	Finished string `json:"finished"`
 }
 
-type discord struct {
+type Discord struct {
 	Content string `json:"content"`
 }
 

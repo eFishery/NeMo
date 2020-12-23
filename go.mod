@@ -1,4 +1,4 @@
-module github.com/eFishery/nemo
+module github.com/eFishery/NeMo
 
 go 1.15
 

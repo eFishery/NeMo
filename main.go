@@ -16,6 +16,8 @@ import (
 	cron "github.com/robfig/cron/v3"
 	godotenv "github.com/joho/godotenv"
 	// "github.com/davecgh/go-spew/spew"
+
+	"github.com/eFishery/NeMo/utils"
 )
 
 type waHandler struct {
@@ -25,19 +27,15 @@ type waHandler struct {
 
 }
 
-var Schedules []Schedule
-
-var Settings *Setting
-
-var BuildCommands []BuildCommand
-
-var BuildGreetings []BuildGreeting
-
 func init() {
     if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
     }
 }
+
+var Settings *utils.Setting
+var BuildGreetings []utils.BuildGreeting
+var BuildCommands []utils.BuildCommand
 
 func main() {
 
@@ -47,18 +45,13 @@ func main() {
 
 	sender := os.Args[1]
 
-	Settings = LoadSetting()
-
-	builder()
-
-	readGreetingsFile()
+	Settings = utils.LoadSetting()
+	Settings.Builder()
+	BuildGreetings = utils.ReadGreetingsFile()
 
 	jadwal := cron.New()
 
-	cmds := readBuildCommandsFiles()
-	if !cmds {
-		return
-	}
+	BuildCommands = utils.ReadBuildCommandsFiles()
 
 	wac, err := whatsapp.NewConn(5 * time.Second)
 	// wac.SetClientVersion(0, 4, 2080)
@@ -80,8 +73,8 @@ func main() {
 		log.Fatalf("error pinging in: %v\n", err)
 	}
 	
-	schedule := readScheduleFiles()
-	if !schedule {
+	isLoaded, Schedules := utils.ReadScheduleFiles()
+	if !isLoaded {
 		log.Println("Can't read Schedule Files")
 		return
 	}

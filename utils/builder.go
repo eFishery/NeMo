@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"io/ioutil"
@@ -17,8 +17,8 @@ func matchYAMLFile(filename string) bool {
 }
 
 
-func builder() {
-	linter := builder_linter_all()
+func (Settings *Setting) Builder() {
+	linter := Settings.builder_linter()
 	if len(linter) > 0 {
 		for i:= range(linter){
 			log.Println(linter[i])
@@ -39,7 +39,7 @@ func builder() {
 			log.Println("Build file " + file.Name())
 			processName := file.Name()
 			var coral Coral
-			coral.getCoral(processName)
+			coral.GetCoral(processName)
 
 			var commandCompile = BuildCommand {
 				Prefix: coral.Commands.Prefix,
@@ -138,14 +138,14 @@ func builder() {
 	}
 }
 
-func builder_linter_all() []string {
+func (Settings *Setting) builder_linter() []string {
 	var result []string
 	files,_ := ioutil.ReadDir(Settings.CoralDir)
 	for _, file := range files {
 		if matchYAMLFile(file.Name()) {
 			var coral Coral
 
-			coral.getCoral(file.Name())
+			coral.GetCoral(file.Name())
 
 			if !coral.valAuthor() {
 				result = append(result, file.Name() + ": Author must complete")

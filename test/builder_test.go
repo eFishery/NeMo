@@ -1,9 +1,11 @@
-package main
+package test
 
 import (
 	"io/ioutil"
 	"testing"
 	"os"
+
+	"github.com/eFishery/NeMo/utils"
 )
 
 func TestBuildCommandsAutoCreated( t *testing.T) {

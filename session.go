@@ -7,11 +7,13 @@ import (
 	"log"
 	"fmt"
 	"time"
+
+	"github.com/eFishery/NeMo/utils"
 )
 
-func newSession(phone_number string, current_process string, timeout int) Session{
+func newSession(phone_number string, current_process string, timeout int) utils.Session{
 
-	savedSession := Session {
+	savedSession := utils.Session {
 		PhoneNumber: phone_number,
 		CurrentProcess: current_process,
 		CurrentQuestionSlug: 0,
@@ -21,19 +23,19 @@ func newSession(phone_number string, current_process string, timeout int) Sessio
 	}
 
 	file, _ := json.MarshalIndent(savedSession, "", " ")
-	_ = ioutil.WriteFile(fileSession(phone_number), file, 0644)
+	_ = ioutil.WriteFile(utils.FileSession(phone_number), file, 0644)
 
 	return savedSession
 }
 
-func loadSession(phone_number string) (Session, error) {
-	var s Session
-	file_session, err := ioutil.ReadFile(fileSession(phone_number))
+func loadSession(phone_number string) (utils.Session, error) {
+	var s utils.Session
+	file_session, err := ioutil.ReadFile(utils.FileSession(phone_number))
 
 	if err != nil {
 		log.Println("Create a new file")
-		file, _ := json.MarshalIndent(Session{}, "", " ")
-		_ = ioutil.WriteFile(fileSession(phone_number), file, 0644)
+		file, _ := json.MarshalIndent(utils.Session{}, "", " ")
+		_ = ioutil.WriteFile(utils.FileSession(phone_number), file, 0644)
 		return s, fmt.Errorf("Session hasn't been created")	
 	}
 
@@ -45,7 +47,7 @@ func loadSession(phone_number string) (Session, error) {
 	return s, nil
 }
 
-func saveSession(s Session, phone_number string) {
+func saveSession(s utils.Session, phone_number string) {
 	file, _ := json.MarshalIndent(s, "", " ")
-	_ = ioutil.WriteFile(fileSession(phone_number), file, 0644)	
+	_ = ioutil.WriteFile(utils.FileSession(phone_number), file, 0644)	
 }

@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/eFishery/NeMo/utils"
 )
 
 var (
@@ -27,13 +29,13 @@ var (
 // if no URL is found in pesan, pesan is returned as is
 // if URL is found, try POST request to url
 // currently only supports JSON response with message key
-func nemoParser(pesan string, Sessions Session) (string, error) {
+func nemoParser(pesan string, Sessions utils.Session) (string, error) {
 	urlCount := strings.Count(pesan, "{{")
 	if urlCount == 0 {
 		return pesan, nil
 	}
 	for i := 0; i < urlCount; i++ {
-		url := between(pesan, "{{", "}}")
+		url := utils.Between(pesan, "{{", "}}")
 		r, err := req.Post(url, req.BodyJSON(Sessions))
 		if err != nil {
 			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errReqErr(url), -1)

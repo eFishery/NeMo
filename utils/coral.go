@@ -1,4 +1,4 @@
-package main
+package utils
 
 func (coral *Coral) valCommands() bool{
 	if coral.Commands.Prefix == ""{ return false }

@@ -1,9 +1,11 @@
-package main
+package test
 
 import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/eFishery/NeMo/utils"
 )
 
 const (
@@ -38,7 +40,7 @@ func TestNemoParser(t *testing.T) {
 			name:   "three_url_from_file",
 			pesan:  fmt.Sprintf("hello {{%s}} hello {{%s}} hello {{%s}}", testURL1, testURL2, testURL3),
 			res:    "hello 1 hello 2 hello 3",
-			config: "config/keys-example.json",
+			config: "test/config/keys-example.json",
 		},
 	}
 	sess := Session{
