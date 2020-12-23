@@ -30,6 +30,7 @@ func builder() {
 	var dataSetCommands []BuildCommand
 	var dataSetSchedules []Schedule
 	var dataSetGreetings []BuildGreeting
+	globalGreetingIsExists := false
 	saveToFile := true
 	for _, file := range files {
 		saveToCommand := true
@@ -65,31 +66,44 @@ func builder() {
 
 				var ExpectedUsers []string
 				for ii := range(coral.ExpectedUsers) {
-					ExpectedUsers = append(ExpectedUsers, fmt.Sprintf("%s@s.whatsapp.net", coral.ExpectedUsers[ii]))
-				}
-				var scheduleCompile = Schedule {
-					Rule: coral.Schedule.Rule,
-					ProcessName: processName,
-					Message: coral.Schedule.Message,
-					ExpectedUsers: ExpectedUsers,
-					Sender: coral.Schedule.Sender,
-				}
-				for index := range(dataSetSchedules) {
-					if dataSetSchedules[index].Rule == scheduleCompile.Rule {
-						log.Println("Schedule " + scheduleCompile.Rule + " is skipped because already exist in process " + dataSetSchedules[index].ProcessName)
+					if coral.ExpectedUsers[ii] == "any" {
+						ExpectedUsers = append(ExpectedUsers, fmt.Sprintf("%s@s.whatsapp.net", coral.ExpectedUsers[ii]))
+						log.Println("Schedule " + processName + " is skipped because schedule can't process any users")
 						saveToSchedule = false
 						break
 					}
 				}
 				if saveToSchedule {
-					dataSetSchedules = append(dataSetSchedules, scheduleCompile)
+					var scheduleCompile = Schedule {
+						Rule: coral.Schedule.Rule,
+						ProcessName: processName,
+						Message: coral.Schedule.Message,
+						ExpectedUsers: ExpectedUsers,
+						Sender: coral.Schedule.Sender,
+					}
+					for index := range(dataSetSchedules) {
+						if dataSetSchedules[index].Rule == scheduleCompile.Rule {
+							log.Println("Schedule " + scheduleCompile.Rule + " is skipped because already exist in process " + dataSetSchedules[index].ProcessName)
+							saveToSchedule = false
+							break
+						}
+					}
+					if saveToSchedule {
+						dataSetSchedules = append(dataSetSchedules, scheduleCompile)
+					}
 				}
 			}
 
-			if coral.DefaultGreeting.Message != "" {
+			if coral.valGreeting() {
 
 				var ExpectedUsers []string
 				for ii := range(coral.ExpectedUsers) {
+					if coral.ExpectedUsers[ii] == "any" {
+						log.Println("Replace all greeting to this greeting because any expected users is existed")
+						globalGreetingIsExists = true
+						ExpectedUsers = []string{"any"}
+						break
+					}
 					ExpectedUsers = append(ExpectedUsers, fmt.Sprintf("%s@s.whatsapp.net", coral.ExpectedUsers[ii]))
 				}
 				var defaultGreetingCompile = BuildGreeting {
@@ -98,7 +112,13 @@ func builder() {
 					Webhook: coral.DefaultGreeting.Webhook,
 					ExpectedUsers: ExpectedUsers,
 				}
-				dataSetGreetings = append(dataSetGreetings, defaultGreetingCompile)
+
+				if globalGreetingIsExists {
+					dataSetGreetings = []BuildGreeting{defaultGreetingCompile}
+					break
+				}else{
+					dataSetGreetings = append(dataSetGreetings, defaultGreetingCompile)
+				}
 			}
 
 		}else{

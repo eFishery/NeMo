@@ -166,8 +166,8 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		coral.getCoral(process)
 
 		if len(coral.ExpectedUsers) > 0 {
-			for usersIndex := range coral.ExpectedUsers {
-				if coral.ExpectedUsers[usersIndex] == phone_number {
+      for usersIndex := range(coral.ExpectedUsers) {
+				if coral.ExpectedUsers[usersIndex] == phone_number || coral.ExpectedUsers[usersIndex] == "any" {
 					break
 				}
 				if len(coral.ExpectedUsers)-1 == usersIndex {
@@ -177,9 +177,28 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 			}
 		}
 
-		txt, imgs, err := nemoParser(BuildCommands[index].Message, Sessions)
-		if err != nil {
-			log.Println(err.Error())
+// BREAKPOINT-1
+// 		txt, imgs, err := nemoParser(BuildCommands[index].Message, Sessions)
+// 		if err != nil {
+// 			log.Println(err.Error())
+      
+		sepparator := fmt.Sprintf("%s%s ", coral.Commands.Prefix, coral.Commands.Command)
+		var question = ""
+		if len(strings.Split(message.Text, strings.ToLower(sepparator))) > 1 {
+			question = strings.Split(message.Text, strings.ToLower(sepparator))[1]
+		}
+
+		dataBaru := Data{
+			Slug: "",
+			Question: question,
+			Answer: "",
+			Created: time.Now().Format(time.RFC3339),
+		}
+
+		Sessions.Datas = append(Sessions.Datas, dataBaru)
+		reply, parserErr := nemoParser(BuildCommands[index].Message, Sessions)
+		if parserErr != nil {
+			log.Println(parserErr.Error())
 			return
 		}
 
@@ -211,6 +230,8 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 	// Check the message replied
 	if !(message.Info.Timestamp < wh.startTime) {
+
+		log.Println(message.Info.RemoteJid + ": " + message.Text)
 
 		// check the previous message who send the message, if bot, check the message, if still same, just keep silent, if not continue
 		// if user reply then can do
@@ -336,7 +357,7 @@ func currently_it_do_nothing(wac *whatsapp.Conn, RJID string) {
 	// need to test this
 	_, err := loadSession(phone_number)
 	if err != nil {
-		go sendMessage(wac, "I don't know what you do but it do nothing", RJID)
+		log.Println("I don't know what you do but it do nothing")
 		return
 	}
 }
@@ -360,10 +381,14 @@ func (wh *waHandler) HandleContactMessage(message whatsapp.ContactMessage) {
 }
 
 // need to test if the greeting is function well and return nothing after send message
-func greeting(wac *whatsapp.Conn, RJID string, message string) {
-	for gIndex := range BuildGreetings {
-		for pIndex := range BuildGreetings[gIndex].ExpectedUsers {
-			if BuildGreetings[gIndex].ExpectedUsers[pIndex] == RJID {
+func greeting(wac *whatsapp.Conn, RJID string, message string){
+	for gIndex := range(BuildGreetings) {
+		for pIndex := range(BuildGreetings[gIndex].ExpectedUsers) {
+			if(strings.Split(RJID, "@")[1] == "g.us" && BuildGreetings[gIndex].ExpectedUsers[pIndex] == "any"){
+				fmt.Println("The any default message is enabled, and only accepted by direct message")
+				return
+			}
+			if(BuildGreetings[gIndex].ExpectedUsers[pIndex] == RJID || BuildGreetings[gIndex].ExpectedUsers[pIndex] == "any"){
 				url := BuildGreetings[gIndex].Webhook.URL
 
 				logGreeting := LogGreeting{
