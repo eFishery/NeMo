@@ -3,6 +3,7 @@
 .env
 .compile
 .dev
+.coral
 
 sessions
 .sessions

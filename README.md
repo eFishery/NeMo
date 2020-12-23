@@ -67,6 +67,8 @@ default_greeting:
 
 ![](https://cdn-images-1.medium.com/max/800/1*hH-ypAL3F3nmcsBW-5QEKg.png)
 
+**note: default greeting will never sent to group
+
 ### Commands
 
 
@@ -82,6 +84,10 @@ commands:
 ```
 
 ![](https://cdn-images-1.medium.com/max/800/1*dkFUFXoJjMzMj0OeIV-K7Q.png)
+
+you can use the message with the URL POST with format `{{URL}}` with POST method
+
+for example if you type `!start hello` in the chat, the NeMo will sent the body like in the Webhook part and the `hello` will be inserted in the question part.
 
 ### Process
 
@@ -166,7 +172,9 @@ expected_users:
   - 628321321312
 ```
 
-you can set the `expected_users` to `any` so this will targeted the `any` user for `command` and `default_greeting` but the `schedules` will be disabled due to `any` users
+you can set the `expected_users` to `any` so this will targeted the `any` user for `command` and `default_greeting` but the `schedules` will be disabled due to `any` users.
+
+to activate bot in group you can just simply add the `phonenumber-groupid`
 
 ```YAML
 expected_users:
