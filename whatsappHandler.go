@@ -177,6 +177,20 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 			}
 		}
 
+		sepparator := fmt.Sprintf("%s%s ", coral.Commands.Prefix, coral.Commands.Command)
+		var question = ""
+		if len(strings.Split(message.Text, strings.ToLower(sepparator))) > 1 {
+			question = strings.Split(message.Text, strings.ToLower(sepparator))[1]
+		}
+
+		dataBaru := Data{
+			Slug: "",
+			Question: question,
+			Answer: "",
+			Created: time.Now().Format(time.RFC3339),
+		}
+
+		Sessions.Datas = append(Sessions.Datas, dataBaru)
 		reply, parserErr := nemoParser(BuildCommands[index].Message, Sessions)
 		if parserErr != nil {
 			log.Println(parserErr.Error())
@@ -331,7 +345,7 @@ func currently_it_do_nothing(wac *whatsapp.Conn, RJID string) {
 	// need to test this
 	_, err := loadSession(phone_number)
 	if err != nil {
-		go sendMessage(wac, "I don't know what you do but it do nothing", RJID)
+		log.Println("I don't know what you do but it do nothing")
 		return
 	}
 }

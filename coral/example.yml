@@ -68,3 +68,5 @@ webhook:
   service: DISCORD
   url: https://discordapp.com/api/webhooks/469570451010617344/GVUOyyE93edzBHcofjUr29oaXMtnAyxozRnoK_YmrcFH76kG57xEq_qNK2gJpUqJk8iR
 
+expected_users:
+  - any
