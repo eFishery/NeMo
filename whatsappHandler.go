@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"os"
 	"fmt"
 	"log"
-	"time"
-	"strings"
+	"os"
 	"regexp"
 	"strconv"
+	"strings"
+	"time"
 
 	whatsapp "github.com/Rhymen/go-whatsapp"
 )
 
-func (wh *waHandler)  HandleImageMessage(message whatsapp.ImageMessage) {
+func (wh *waHandler) HandleImageMessage(message whatsapp.ImageMessage) {
 	if !(message.Info.Timestamp < wh.startTime) {
 
 		phone_number := strings.Split(message.Info.RemoteJid, "@")[0]
@@ -66,11 +66,11 @@ func (wh *waHandler)  HandleImageMessage(message whatsapp.ImageMessage) {
 				return
 			}
 			log.Printf("%v %v\n\timage received, saved at:%v\n", message.Info.Timestamp, message.Info.RemoteJid, filename)
-			
+
 			uploadS3 := AddFileToS3(filename)
 
 			log.Println("Files Uploaded and here is the link : " + uploadS3)
-			
+
 			reply := "terminate"
 
 			waktu, err := time.Parse(time.RFC3339, Sessions.Expired)
@@ -92,21 +92,21 @@ func (wh *waHandler)  HandleImageMessage(message whatsapp.ImageMessage) {
 				return
 			}
 
-			if sIndex >= (len(coral.Process.Questions)-1) {
+			if sIndex >= (len(coral.Process.Questions) - 1) {
 				reply = coral.Process.EndMessage
 				Sessions.ProcessStatus = "DONE"
 				Sessions.Finished = time.Now().Format(time.RFC3339)
-			}else{
+			} else {
 				reply = coral.Process.Questions[sIndex+1].Question.Asking
 				Sessions.ProcessStatus = "NEXT"
-				Sessions.CurrentQuestionSlug = sIndex+1
+				Sessions.CurrentQuestionSlug = sIndex + 1
 			}
 
 			dataBaru := Data{
-				Slug: coral.Process.Questions[sIndex].Question.Slug,
+				Slug:     coral.Process.Questions[sIndex].Question.Slug,
 				Question: coral.Process.Questions[sIndex].Question.Asking,
-				Answer: uploadS3,
-				Created: time.Now().Format(time.RFC3339),
+				Answer:   uploadS3,
+				Created:  time.Now().Format(time.RFC3339),
 			}
 
 			Sessions.Datas = append(Sessions.Datas, dataBaru)
@@ -149,13 +149,13 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	var Sessions Session
 
 	// Check the existing commands
-	for index := range(BuildCommands) {
+	for index := range BuildCommands {
 
 		// if the user force a new command while in the progress of session, break session and create a new one
 
 		phone_number := strings.Split(message.Info.RemoteJid, "@")[0]
 
-		cur_cmd := fmt.Sprintf("%s%s", BuildCommands[index].Prefix, BuildCommands[index].Command )
+		cur_cmd := fmt.Sprintf("%s%s", BuildCommands[index].Prefix, BuildCommands[index].Command)
 		if !strings.Contains(strings.ToLower(message.Text), cur_cmd) || message.Info.Timestamp < wh.startTime {
 			continue
 		}
@@ -166,7 +166,7 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		coral.getCoral(process)
 
 		if len(coral.ExpectedUsers) > 0 {
-			for usersIndex := range(coral.ExpectedUsers) {
+      for usersIndex := range(coral.ExpectedUsers) {
 				if coral.ExpectedUsers[usersIndex] == phone_number || coral.ExpectedUsers[usersIndex] == "any" {
 					break
 				}
@@ -177,6 +177,11 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 			}
 		}
 
+// BREAKPOINT-1
+// 		txt, imgs, err := nemoParser(BuildCommands[index].Message, Sessions)
+// 		if err != nil {
+// 			log.Println(err.Error())
+      
 		sepparator := fmt.Sprintf("%s%s ", coral.Commands.Prefix, coral.Commands.Command)
 		var question = ""
 		if len(strings.Split(message.Text, strings.ToLower(sepparator))) > 1 {
@@ -197,8 +202,15 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 			return
 		}
 
-		if reply != "timeout" {
-			go sendMessage(wh.c, reply, message.Info.RemoteJid)
+		// non-nil txt indicates is it a text message
+		if txt != nil {
+			go sendMessage(wh.c, txt.Text, message.Info.RemoteJid)
+			return
+		}
+		for i := 0; i < len(imgs); i++ {
+			// if order of image messages sent must follow, use synchronous
+			// or channel to send n-1 images, followed by the last image if all operations succeed
+			go sendImageMessage(wh.c, imgs[i], message.Info.RemoteJid)
 		}
 
 		time.Sleep(time.Duration(3) * time.Second)
@@ -223,7 +235,7 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 		// check the previous message who send the message, if bot, check the message, if still same, just keep silent, if not continue
 		// if user reply then can do
-		
+
 		phone_number := strings.Split(message.Info.RemoteJid, "@")[0]
 		Sessions, err := loadSession(phone_number)
 		if err != nil {
@@ -285,21 +297,21 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 				return
 			}
 
-			if sIndex >= (len(coral.Process.Questions)-1) {
+			if sIndex >= (len(coral.Process.Questions) - 1) {
 				reply = coral.Process.EndMessage
 				Sessions.ProcessStatus = "DONE"
 				Sessions.Finished = time.Now().Format(time.RFC3339)
-			}else{
+			} else {
 				reply = coral.Process.Questions[sIndex+1].Question.Asking
 				Sessions.ProcessStatus = "NEXT"
-				Sessions.CurrentQuestionSlug = sIndex+1
+				Sessions.CurrentQuestionSlug = sIndex + 1
 			}
 
 			dataBaru := Data{
-				Slug: coral.Process.Questions[sIndex].Question.Slug,
+				Slug:     coral.Process.Questions[sIndex].Question.Slug,
 				Question: coral.Process.Questions[sIndex].Question.Asking,
-				Answer: message.Text,
-				Created: time.Now().Format(time.RFC3339),
+				Answer:   message.Text,
+				Created:  time.Now().Format(time.RFC3339),
 			}
 
 			Sessions.Datas = append(Sessions.Datas, dataBaru)
@@ -379,8 +391,8 @@ func greeting(wac *whatsapp.Conn, RJID string, message string){
 			if(BuildGreetings[gIndex].ExpectedUsers[pIndex] == RJID || BuildGreetings[gIndex].ExpectedUsers[pIndex] == "any"){
 				url := BuildGreetings[gIndex].Webhook.URL
 
-				logGreeting := LogGreeting {
-					Message: message,
+				logGreeting := LogGreeting{
+					Message:     message,
 					PhoneNumber: strings.Split(RJID, "@")[0],
 				}
 
