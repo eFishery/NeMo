@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"log"
 	"strings"
 
 	whatsapp "github.com/Rhymen/go-whatsapp"
+	req "github.com/imroc/req"
 
 	"github.com/eFishery/NeMo/utils"
 )
@@ -75,5 +77,52 @@ func greeting(wac *whatsapp.Conn, RJID string, message string){
 				return
 			}
 		}
+	}
+}
+
+func sendImage(wac *whatsapp.Conn, RJID string, imageUrl string, caption string) {
+	// best way to stream image and send
+	// don't have time to backup, so I just comment this haha
+	// reqImg, err := http.Get(imageUrl)
+	// if err != nil {
+	//     log.Fatalf("http.Get -> %v", err)
+	// }
+
+	// reqImg.Body.Close()
+	// img, err := ioutil.ReadAll(reqImg.Body)
+	// if err != nil {
+	//     log.Fatalf("ioutil.ReadAll -> %v", err)
+	// }
+
+	log.Println("get the image")
+	r, _ := req.Get(imageUrl)
+	log.Println("put the image")
+	r.ToFile("/tmp/tmp.png")
+
+	log.Println("open the image")
+	img, err := os.Open("/tmp/tmp.png")
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error reading file: %v\n", err)
+		os.Exit(1)
+	}
+
+	log.Println("parse the var")
+	msg := whatsapp.ImageMessage{
+		Info: whatsapp.MessageInfo{
+			RemoteJid: RJID,
+		},
+		Type:    "image/jpeg",
+		Caption: caption,
+		// Content: bytes.NewReader(img),
+		Content: img,
+	}
+
+	log.Println("sent the image")
+	msgId, err := wac.Send(msg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error sending message: %v", err)
+	} else {
+		fmt.Println("Message Sent -> ID : " + msgId)
 	}
 }
