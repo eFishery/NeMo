@@ -56,12 +56,12 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		}
 
 		dataBaru := utils.Data{
-			Slug: "",
+			Slug: "parameter",
 			Question: question,
 			Answer: "",
 			Created: time.Now().Format(time.RFC3339),
 		}
-
+		Sessions.PhoneNumber = phone_number
 		Sessions.Datas = append(Sessions.Datas, dataBaru)
 		reply, parserErr := nemoParser(BuildCommands[index].Message, Sessions)
 		if parserErr != nil {
