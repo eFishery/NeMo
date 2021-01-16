@@ -108,7 +108,7 @@ the NeMo will handle this body Response
 ```
 
 The `message` key will sent a normal response
-The `images` key will stored all the image information, and will send the image regarding the length of the array
+The `images` key will stored all the image information, and will send the image regarding the length of the array 
 The `URL` key will parse the image from internet and sent this with a new response along side with the `caption`
 
 ### Process
