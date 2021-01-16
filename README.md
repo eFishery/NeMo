@@ -6,6 +6,10 @@
 
 A simple question answer like chatbot to simplify you data input.
 
+# Showcase
+
+[NeMo as the WhatsApp Shop Online Assistant](https://github.com/k1m0ch1/BoBoT/tree/master/bot)
+
 # How to run 
 
 to run you need to have enviroment variable as in `.env.example`, rename it to `.env`, by default you need to create `coral` dir or you can specify by env var `CORAL_DIR`. The `coral` dir is for the bot configuration, so create a `coral` directory and put all the coral file in this folder, also you need the WhatsApp session file in order to connect to the current phone
