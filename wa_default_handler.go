@@ -94,12 +94,9 @@ func sendImage(wac *whatsapp.Conn, RJID string, imageUrl string, caption string)
 	//     log.Fatalf("ioutil.ReadAll -> %v", err)
 	// }
 
-	log.Println("get the image")
 	r, _ := req.Get(imageUrl)
-	log.Println("put the image")
 	r.ToFile("/tmp/tmp.png")
 
-	log.Println("open the image")
 	img, err := os.Open("/tmp/tmp.png")
 
 	if err != nil {
@@ -107,7 +104,6 @@ func sendImage(wac *whatsapp.Conn, RJID string, imageUrl string, caption string)
 		os.Exit(1)
 	}
 
-	log.Println("parse the var")
 	msg := whatsapp.ImageMessage{
 		Info: whatsapp.MessageInfo{
 			RemoteJid: RJID,

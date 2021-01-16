@@ -93,6 +93,24 @@ you can use the message with the URL POST with format `{{URL}}` with POST method
 
 for example if you type `!start hello` in the chat, the NeMo will sent the body like in the Webhook part and the `hello` will be inserted in the question part.
 
+the NeMo will handle this body Response
+
+```json
+{
+  "message": "response",
+  "images": [
+    {
+      "URL": "link to image",
+      "caption": "caption"
+    }
+  ]
+}
+```
+
+The `message` key will sent a normal response
+The `images` key will stored all the image information, and will send the image regarding the length of the array
+The `URL` key will parse the image from internet and sent this with a new response along side with the `caption`
+
 ### Process
 
 This configuration define the question after commands triggered, for a 
