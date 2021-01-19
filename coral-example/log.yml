@@ -1,0 +1,50 @@
+author:
+  name: Yahya
+  phone: "085659289271"
+  email: yahyafalfatih@gmail.com
+
+commands:
+  prefix: "bu"
+  command: "y"
+  run_process: True
+  message: "please fullfill this form"
+
+process:
+  log: True
+  record: True
+  timeout: 300
+  exit_command:
+    prefix: "st"
+    command: "op"
+    message: "you cancel the order."
+  end_message: Thanks
+  questions:
+    - question:
+        slug: first
+        asking: First Question
+        validation:
+          rule: *
+          message: ""
+    - question:
+        slug: second
+        asking: Second Question
+        validation:
+          rule: *
+          message: ""
+    - question:
+        slug: third
+        asking: Third Question
+        validation:
+          rule: *
+          message: ""
+
+webhook:
+  service: WEBHOOK
+  url: "http://127.0.0.1:8000/webhook"
+
+log:
+  service: WEBHOOK
+  url: "http://127.0.0.1:8000/log"
+
+expected_users:
+  - 6285659289271

@@ -20,7 +20,6 @@ commands:
   # better without any space
   command: "starting"
   # arg is separated by #
-  record: True
   run_process: True
   # reply with get from API messages
   # request will be POST to https://api.com/result
@@ -32,6 +31,7 @@ commands:
   message: "Let's start how cool you are"
 
 process:
+  record: True
   timeout: 300
   exit_command:
     prefix: "!"
