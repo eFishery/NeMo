@@ -1,0 +1,40 @@
+author:
+  name: Yahya
+  phone: "085659289271"
+  email: yahyafalfatih@gmail.com
+
+commands:
+  prefix: "s"
+  command: "um"
+  run_process: True
+  message: "please fullfill this form"
+
+process:
+  timeout: 300
+  exit_command:
+    prefix: "st"
+    command: "op"
+    message: "good bye"
+  end_message: "sum of {{first}} {{third}} = {{sum(first,third)}} from all {{sum(first,second,third)}}"
+  questions:
+    - question:
+        slug: first
+        asking: First Question
+        validation:
+          rule: ^[0-9]*$
+          message: "please only number"
+    - question:
+        slug: second
+        asking: Second Question
+        validation:
+          rule: ^[0-9]*$
+          message: "please only number"
+    - question:
+        slug: third
+        asking: Third Question
+        validation:
+          rule: ^[0-9]*$
+          message: "please only number"
+
+expected_users:
+  - 6285659289271

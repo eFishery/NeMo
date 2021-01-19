@@ -49,5 +49,5 @@ func loadSession(phone_number string) (utils.Session, error) {
 
 func saveSession(s utils.Session, phone_number string) {
 	file, _ := json.MarshalIndent(s, "", " ")
-	_ = ioutil.WriteFile(utils.FileSession(phone_number), file, 0644)	
+	_ = ioutil.WriteFile(utils.FileSession(phone_number), file, 0644)
 }

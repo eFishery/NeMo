@@ -1,14 +1,13 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 
 	"fmt"
 	"log"
 	"time"
 	"strings"
 	"regexp"
+	"strconv"
 
 	whatsapp "github.com/Rhymen/go-whatsapp"
 
@@ -100,11 +99,13 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		Sessions, err := loadSession(phone_number)
 		if err != nil {
 			go greeting(wh.c, message.Info.RemoteJid, message.Text)
+			log.Println("return nothing greeting")
 			return
 		}
 
 		if Sessions.CurrentProcess == "" {
 			go greeting(wh.c, message.Info.RemoteJid, message.Text)
+			log.Println("return nothing current process nothing")
 			return
 		}
 
@@ -128,7 +129,7 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 				Sessions.ProcessStatus = "DONE"
 				Sessions.Finished = time.Now().Format(time.RFC3339)
 
-				go saveSession(Sessions, phone_number)
+				defer saveSession(Sessions, phone_number)
 				go sendMessage(wh.c, "Sesi anda susah habis, silahkan ulangi lagi", message.Info.RemoteJid)
 
 				return
@@ -140,7 +141,7 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 				Sessions.ProcessStatus = "DONE"
 				Sessions.Finished = time.Now().Format(time.RFC3339)
 
-				go saveSession(Sessions, phone_number)
+				defer saveSession(Sessions, phone_number)
 				go sendMessage(wh.c, coral.Process.ExitCommand.Message, message.Info.RemoteJid)
 
 				return
@@ -148,15 +149,17 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 			if coral.Process.Questions[sIndex].Question.Validation.Rule == "image" {
 				go sendMessage(wh.c, coral.Process.Questions[sIndex].Question.Validation.Message, message.Info.RemoteJid)
+				
 				return
 			}
 
 			match, err := regexp.MatchString(coral.Process.Questions[sIndex].Question.Validation.Rule, message.Text)
 			if !match {
 				go sendMessage(wh.c, coral.Process.Questions[sIndex].Question.Validation.Message, message.Info.RemoteJid)
+				
 				return
 			}
-
+			
 			if sIndex >= (len(coral.Process.Questions)-1) {
 				reply = coral.Process.EndMessage
 				Sessions.ProcessStatus = "DONE"
@@ -176,8 +179,6 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 			Sessions.Datas = append(Sessions.Datas, dataBaru)
 
-			go saveSession(Sessions, phone_number)
-
 			if coral.Process.Log {
 				logged := SentTo(coral.Log.Service, coral.Log.URL, Sessions)
 				if logged {
@@ -186,6 +187,41 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 			}
 
 			if sIndex >= (len(coral.Process.Questions)-1) {
+				formatCount := strings.Count(reply, "{{")
+				if formatCount > 0 {
+					for i := 0; i < formatCount; i++ {
+						slug := utils.Between(reply, "{{", "}}")
+
+						sumFunction := strings.Count(reply, "sum(")
+						
+						if sumFunction > 0 {
+							for i := 0; i < sumFunction; i++ {
+								sumSlug := utils.Between(reply, "sum(", ")")
+								clearsumSlug := strings.Replace(sumSlug, " ", "", -1)
+								slugs := strings.Split(clearsumSlug, ",")
+								calc := 0
+								for iSlug := range slugs{
+									for slugIndexs := range coral.Process.Questions {
+										if coral.Process.Questions[slugIndexs].Question.Slug == slugs[iSlug] {
+											number, _ := strconv.Atoi(Sessions.Datas[slugIndexs].Answer)
+											log.Println("add ",  number)
+											calc = calc + number
+										}
+									}						
+								}
+								reply = strings.Replace(reply, fmt.Sprintf("{{sum(%s)}}", sumSlug), strconv.Itoa(calc), -1)
+							}
+						}
+
+						for slugIndex := range coral.Process.Questions {
+							if coral.Process.Questions[slugIndex].Question.Slug == slug {
+								answer := Sessions.Datas[slugIndex].Answer
+								reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", slug), answer, -1)
+							}
+						}
+					}
+				}
+
 				if coral.Process.Record {
 					webhook := SentTo(coral.Webhook.Service, coral.Webhook.URL, Sessions)
 					if webhook {
@@ -202,8 +238,7 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 						Sessions.ProcessStatus = "WAIT_ANSWER"
 					}
 
-					file, _ := json.MarshalIndent(Sessions, "", " ")
-					_ = ioutil.WriteFile(utils.FileSession(phone_number), file, 0644)
+					defer saveSession(Sessions, phone_number)
 				}
 			}
 		}
