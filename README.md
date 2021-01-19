@@ -6,6 +6,10 @@
 
 A simple question answer like chatbot to simplify you data input.
 
+# Showcase
+
+[NeMo as the WhatsApp Shop Online Assistant](https://github.com/k1m0ch1/BoBoT/tree/master/bot)
+
 # How to run 
 
 to run you need to have enviroment variable as in `.env.example`, rename it to `.env`, by default you need to create `coral` dir or you can specify by env var `CORAL_DIR`. The `coral` dir is for the bot configuration, so create a `coral` directory and put all the coral file in this folder, also you need the WhatsApp session file in order to connect to the current phone
@@ -87,6 +91,24 @@ commands:
 you can use the message with the URL POST with format `{{URL}}` with POST method
 
 for example if you type `!start hello` in the chat, the NeMo will sent the body like in the Webhook part and the `hello` will be inserted in the question part.
+
+the NeMo will handle this body Response
+
+```json
+{
+  "message": "response",
+  "images": [
+    {
+      "URL": "link to image",
+      "caption": "caption"
+    }
+  ]
+}
+```
+
+The `message` key will sent a normal response
+The `images` key will stored all the image information, and will send the image regarding the length of the array 
+The `URL` key will parse the image from internet and sent this with a new response along side with the `caption`
 
 ### Process
 

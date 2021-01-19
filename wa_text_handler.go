@@ -62,14 +62,17 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		}
 		Sessions.PhoneNumber = phone_number
 		Sessions.Datas = append(Sessions.Datas, dataBaru)
-		reply, parserErr := nemoParser(BuildCommands[index].Message, Sessions)
+		reply, commonResponse, parserErr := nemoParser(BuildCommands[index].Message, Sessions)
 		if parserErr != nil {
 			log.Println(parserErr.Error())
 			return
 		}
 
 		if reply != "timeout" {
-			go sendMessage(wh.c, reply, message.Info.RemoteJid)
+			for indexImage := range(commonResponse.Images) {
+				go sendImage(wh.c, message.Info.RemoteJid, commonResponse.Images[indexImage].URL, commonResponse.Images[indexImage].Caption)
+			}
+			go sendMessage(wh.c, reply, message.Info.RemoteJid)			
 		}
 
 		time.Sleep(time.Duration(3) * time.Second)

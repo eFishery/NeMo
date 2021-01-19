@@ -139,6 +139,16 @@ type LogGreeting struct {
 	PhoneNumber string `json:"phone_number" yaml:"phone_number"`
 }
 
+type Image struct {
+	URL string `json:"URL"`
+	Caption string `json:"caption"`
+}
+
+type CommonResponse struct {
+	Message string `json:"message"`
+	Images []Image `json:"images"`
+}
+
 
 // func NewProcess() {
 // 	return &Process{

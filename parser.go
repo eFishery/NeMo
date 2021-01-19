@@ -5,7 +5,6 @@ import (
 	"fmt"
 	req "github.com/imroc/req"
 	"io/ioutil"
-	"os"
 	"strings"
 	"strconv"
 
@@ -30,11 +29,12 @@ var (
 // if no URL is found in pesan, pesan is returned as is
 // if URL is found, try POST request to url
 // currently only supports JSON response with message key
-func nemoParser(pesan string, Sessions utils.Session) (string, error) {
+func nemoParser(pesan string, Sessions utils.Session) (string, utils.CommonResponse, error) {
+	var commonResponse utils.CommonResponse
 	parameter := strings.Split(Sessions.Datas[0].Question, " ")
 	urlCount := strings.Count(pesan, "{{")
 	if urlCount == 0 {
-		return pesan, nil
+		return pesan, commonResponse, nil
 	}
 	for i := 0; i < urlCount; i++ {
 		value := utils.Between(pesan, "{{", "}}")
@@ -45,19 +45,9 @@ func nemoParser(pesan string, Sessions utils.Session) (string, error) {
 				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), errReqErr(value), -1)
 			}
 
-			var m map[string]interface{}
-			r.ToJSON(&m)
+			r.ToJSON(&commonResponse)
 
-			// TODO maybe calls this in main to setup
-			sk := supportKey(os.Getenv(defSupportedRespKeysConfig))
-			k := lookupKey(m, sk)
-			if k == "" {
-				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), errRespNotSupported(value), -1)
-				continue
-			}
-			if m[k] != "" {
-				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), fmt.Sprintf("%v", m[k]), -1)
-			}
+			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), commonResponse.Message, -1)
 		}else{
 			if len(parameter) > 1 {
 				iindex, _ := strconv.Atoi(value)
@@ -67,7 +57,7 @@ func nemoParser(pesan string, Sessions utils.Session) (string, error) {
 		}
 	}
 
-	return pesan, nil
+	return pesan, commonResponse, nil
 }
 
 // lookupKey looks up if key exists in a map based on priority
