@@ -7,7 +7,7 @@ commands:
   prefix: "s"
   command: "um"
   run_process: True
-  message: "please fullfill this form"
+  message: "sum of {{1}} {{2}} {{3}} is sum(1,2,3) {{http://127.0.0.1:8000/}}"
 
 process:
   timeout: 300

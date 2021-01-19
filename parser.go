@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"strconv"
 
 	"github.com/eFishery/NeMo/utils"
 )
@@ -30,29 +31,39 @@ var (
 // if URL is found, try POST request to url
 // currently only supports JSON response with message key
 func nemoParser(pesan string, Sessions utils.Session) (string, error) {
+	parameter := strings.Split(Sessions.Datas[0].Question, " ")
 	urlCount := strings.Count(pesan, "{{")
 	if urlCount == 0 {
 		return pesan, nil
 	}
 	for i := 0; i < urlCount; i++ {
-		url := utils.Between(pesan, "{{", "}}")
-		r, err := req.Post(url, req.BodyJSON(Sessions))
-		if err != nil {
-			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errReqErr(url), -1)
-		}
+		value := utils.Between(pesan, "{{", "}}")
+		httpCount := strings.Count(value, "http")
+		if httpCount > 0 {
+			r, err := req.Post(value, req.BodyJSON(Sessions))
+			if err != nil {
+				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), errReqErr(value), -1)
+			}
 
-		var m map[string]interface{}
-		r.ToJSON(&m)
+			var m map[string]interface{}
+			r.ToJSON(&m)
 
-		// TODO maybe calls this in main to setup
-		sk := supportKey(os.Getenv(defSupportedRespKeysConfig))
-		k := lookupKey(m, sk)
-		if k == "" {
-			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), errRespNotSupported(url), -1)
-			continue
-		}
-		if m[k] != "" {
-			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", url), fmt.Sprintf("%v", m[k]), -1)
+			// TODO maybe calls this in main to setup
+			sk := supportKey(os.Getenv(defSupportedRespKeysConfig))
+			k := lookupKey(m, sk)
+			if k == "" {
+				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), errRespNotSupported(value), -1)
+				continue
+			}
+			if m[k] != "" {
+				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), fmt.Sprintf("%v", m[k]), -1)
+			}
+		}else{
+			if len(parameter) > 1 {
+				iindex, _ := strconv.Atoi(value)
+				replaceValue := parameter[iindex-1]
+				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), replaceValue, -1)
+			}
 		}
 	}
 
