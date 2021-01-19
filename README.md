@@ -78,7 +78,6 @@ just remember if you want to record or in run process after triggering the comma
 commands:
   prefix: "!"
   command: "start"
-  record: True
   run_process: True
   message: "Let's start how cool you are"
 ```
@@ -97,6 +96,8 @@ in order to use validation rule `image`, you need to specify `AWS S3` configurat
 
 ```YAML
 process:
+  record: True
+  log: False
   timeout: 300
   exit_command:
     prefix: "!"
@@ -118,12 +119,17 @@ process:
           message: you can't read that ? I ask you to write some number
 ```
 
+if you set the key `record` to `True` you need to add the `Webhook` part
+
+when you set the `log` key into True, you need to add `log` parent key
+
 ![](https://cdn-images-1.medium.com/max/800/1*yi3RegeDTcemqga-8CQ5Bg.png)
+
 
 
 ### Webhook
 
-In order to save the input data, you can rely on webhook that built in this ChatBot
+In order to save all the input data, you can rely on webhook that built in this ChatBot
 
 ```YAML
 webhook:
@@ -132,7 +138,6 @@ webhook:
 ```
 
 the data will be sent with `POST` method to `url` key with body `JSON` like this
-
 
 ```JSON
 {
@@ -161,6 +166,18 @@ the data will be sent with `POST` method to `url` key with body `JSON` like this
  "finished": "2020-09-25T13:55:17+07:00"
 }
 ```
+
+### Log
+
+In order to log every user input when the process start, you can rely on log that built in this ChatBot
+
+```YAML
+webhook:
+  service: WEBHOOK
+  url: https://url.com/webhook
+```
+
+the data will be sent with `POST` method to `url` key with body `JSON` like above on webhook part
 
 ### Expected Users
 

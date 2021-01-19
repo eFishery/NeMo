@@ -21,7 +21,6 @@ type Commands struct {
 	Prefix string `yaml:"prefix"`
 	Command string `yaml:"command"`
 	Message string `yaml:"message"`
-	Record bool `yaml:"record"`
 	RunProcess bool `yaml:"run_process"`
 }
 
@@ -47,6 +46,8 @@ type Questions struct {
 }
 
 type Process struct {
+	Record bool `yaml:"record"`
+	Log bool `yaml:"log"`
 	Timeout int `yaml:"timeout"`
 	ExitCommand ExitCommand `yaml:"exit_command"`
 	EndMessage string `yaml:"end_message"`
@@ -73,13 +74,14 @@ type Coral struct {
 	Commands Commands `yaml:"commands"`
 	Process Process `yaml:"process"`
 	Webhook Webhook `yaml:"webhook"`
+	Log Webhook `yaml:"log"`
 	ExpectedUsers []string `yaml:"expected_users"`
 }
 
 type BuildCommand struct {
 	Prefix string `json:"prefix"`
 	Command string `json:"command"`
-	Record bool `json:"record"`
+	Log bool `json:"log"`
 	Message string `json:"message"`
 	RunProcess string `json:"run_process"`
 }

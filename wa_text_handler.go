@@ -178,17 +178,18 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 			go saveSession(Sessions, phone_number)
 
-			if coral.Commands.Record {
-				switch coral.Webhook.Service {
-				case "DISCORD":
-					_, errSent := SentToDiscord(coral.Webhook.URL, Sessions)
-					if errSent != nil {
-						log.Println(errSent.Error())
-					}
-				case "WEBHOOK":
-					_, errSent := SentToWebhook(coral.Webhook.URL, Sessions)
-					if errSent != nil {
-						log.Println(errSent.Error())
+			if coral.Process.Log {
+				logged := SentTo(coral.Log.Service, coral.Log.URL, Sessions)
+				if logged {
+					log.Println("Data sucess sent to " + coral.Log.Service)
+				}
+			}
+
+			if sIndex >= (len(coral.Process.Questions)-1) {
+				if coral.Process.Record {
+					webhook := SentTo(coral.Webhook.Service, coral.Webhook.URL, Sessions)
+					if webhook {
+						log.Println("Data sucess sent to " + coral.Webhook.Service)
 					}
 				}
 			}

@@ -44,7 +44,6 @@ func (Settings *Setting) Builder() {
 			var commandCompile = BuildCommand {
 				Prefix: coral.Commands.Prefix,
 				Command: coral.Commands.Command,
-				Record: coral.Commands.Record,
 				RunProcess: processName,
 				Message: coral.Commands.Message,
 			}
@@ -181,9 +180,9 @@ func (Settings *Setting) builder_linter() []string {
 				}
 			}
 
-			if coral.Commands.Record {
-				if coral.Webhook.Service == "" || coral.Webhook.URL == "" {
-					result = append(result, file.Name() + ": You need to set a value Webhook")
+			if coral.Process.Log {
+				if coral.Log.Service == "" || coral.Log.URL == "" {
+					result = append(result, file.Name() + ": You need to set a value Log")
 				}
 			}
 

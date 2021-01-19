@@ -7,15 +7,40 @@ import (
 	"github.com/eFishery/NeMo/utils"
 )
 
-func SentToWebhook(url string, Sessions utils.Session) (int, error) {
+func SentTo(service string, url string, Sessions utils.Session) bool{
+	isSent := false
+	switch service {
+	case "DISCORD":
+		isSent, errSent := SentToDiscord(url, Sessions)
+		if errSent != nil {
+			log.Println(errSent.Error())
+		}
+		return isSent
+	case "WEBHOOK":
+		isSent, errSent := SentToWebhook(url, Sessions)
+		if errSent != nil {
+			log.Println(errSent.Error())
+		}
+		return isSent
+	}
+	return isSent
+}
+
+func SentToWebhook(url string, Sessions utils.Session) (bool, error) {
 	r, err := req.Post(url, req.BodyJSON(Sessions))
 	if err != nil {
-		return 500, err
+		return false, err
 	}
 
 	resp := r.Response()
 
-	return resp.StatusCode, nil
+	response := false
+
+	if resp.StatusCode == 200 {
+		response = true
+	}
+
+	return response, nil
 }
 
 func SentToDiscord(url string, Sessions utils.Session) (bool, error) {
