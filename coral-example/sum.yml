@@ -7,7 +7,7 @@ commands:
   prefix: "s"
   command: "um"
   run_process: True
-  message: "sum of {{1}} {{2}} {{3}} is sum(1,2,3) {{http://127.0.0.1:8000/}}"
+  message: "sum of {{1}} {{2}} {{3}} is {{sum(1,2)}} \n\n {{http://127.0.0.1:8000/}}"
 
 process:
   timeout: 300
@@ -15,23 +15,23 @@ process:
     prefix: "st"
     command: "op"
     message: "good bye"
-  end_message: "sum of {{first}} {{third}} = {{sum(first,third)}} from all {{sum(first,second,third)}}"
+  end_message: "sum of {{first}} {{third}} = {{sum(first,third)}} from all {{sum(first,second,third)}} \n\n {{http://127.0.0.1:8000/}}"
   questions:
     - question:
         slug: first
-        asking: First Question
+        asking: First Question, and I parse the last argument {{3}}
         validation:
           rule: ^[0-9]*$
           message: "please only number"
     - question:
         slug: second
-        asking: Second Question
+        asking: your answer is {{first}} Second Question, and I parse the first argument {{1}}
         validation:
           rule: ^[0-9]*$
           message: "please only number"
     - question:
         slug: third
-        asking: Third Question
+        asking: your answer is {{second}} Third Question, and I parse all the argument {{1}} {{2}} {{3}}
         validation:
           rule: ^[0-9]*$
           message: "please only number"
