@@ -88,9 +88,9 @@ commands:
 
 ![](https://cdn-images-1.medium.com/max/800/1*dkFUFXoJjMzMj0OeIV-K7Q.png)
 
-you can use the message with the URL POST with format `{{URL}}` with POST method
+### Message Format Parser
 
-for example if you type `!start hello` in the chat, the NeMo will sent the body like in the Webhook part and the `hello` will be inserted in the question part.
+you can use the message with the URL POST with format `{{URL}}` with POST method
 
 the NeMo will handle this body Response
 
@@ -109,6 +109,16 @@ the NeMo will handle this body Response
 The `message` key will sent a normal response
 The `images` key will stored all the image information, and will send the image regarding the length of the array 
 The `URL` key will parse the image from internet and sent this with a new response along side with the `caption`
+
+also you can get the indexing of the parameter when user using the command and add some argument, for example user type this command
+
+`!start hello world` this will trigger this command to having a argument, and whenever the message include the message indexing like `{{1}}` or `{{2}}` this will return the argument index, if the message with the format like this `everyone {{1}}, I love the {{2}}` this will return message `everyone hello, I love the world`
+
+if the argument is using number you can use function `sum(argumentindex,argumentindex,...)` to calculate between number, for example the message following format `we have {{1}} {{2}} {{3}} and sum of {{1}} and {{3}} is {{sum(1,3)}}` with user type the command like this `!start 3 2 1` this will return `we have 3 2 1 and sum of 3 and 1 is 4`
+
+for example if you type `!start hello` in the chat, the NeMo will sent the body like in the Webhook part and the `hello` will be inserted in the question part.
+
+
 
 ### Process
 
@@ -146,7 +156,6 @@ if you set the key `record` to `True` you need to add the `Webhook` part
 when you set the `log` key into True, you need to add `log` parent key
 
 ![](https://cdn-images-1.medium.com/max/800/1*yi3RegeDTcemqga-8CQ5Bg.png)
-
 
 
 ### Webhook

@@ -102,6 +102,7 @@ type Session struct {
 	CurrentProcess string `json:"current_process"`
 	CurrentQuestionSlug int `json:"current_question_slug"`
 	ProcessStatus string `json:"process_status"` // DONE, WAIT_ANSWER, SENDED
+	Argument string `json:"argument"`
 	Datas []Data `json:"data"`
 	Sent string `json:"sent"`
 	SentTo string `json:"sent_to"`

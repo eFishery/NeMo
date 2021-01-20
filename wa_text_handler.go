@@ -7,7 +7,6 @@ import (
 	"time"
 	"strings"
 	"regexp"
-	"strconv"
 
 	whatsapp "github.com/Rhymen/go-whatsapp"
 
@@ -54,15 +53,11 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 			question = strings.Split(message.Text, strings.ToLower(sepparator))[1]
 		}
 
-		dataBaru := utils.Data{
-			Slug: "parameter",
-			Question: question,
-			Answer: "",
-			Created: time.Now().Format(time.RFC3339),
-		}
 		Sessions.PhoneNumber = phone_number
-		Sessions.Datas = append(Sessions.Datas, dataBaru)
-		reply, commonResponse, parserErr := nemoParser(BuildCommands[index].Message, Sessions)
+		Sessions.CurrentProcess = BuildCommands[index].RunProcess
+		Sessions.Argument = question
+		Sessions.ProcessStatus = "WAIT_ANSWER"
+		reply, commonResponse, parserErr := commandParser(BuildCommands[index].Message, Sessions)
 		if parserErr != nil {
 			log.Println(parserErr.Error())
 			return
@@ -78,12 +73,20 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 		time.Sleep(time.Duration(3) * time.Second)
 
 		if BuildCommands[index].RunProcess != "" && coral.Commands.RunProcess {
-			savedSession := newSession(phone_number, process, coral.Process.Timeout)
+			savedSession := newSession(Sessions, coral.Process.Timeout)
 
 			reply = coral.Process.Questions[savedSession.CurrentQuestionSlug].Question.Asking
 
+			replyS, _, parserErr := processParser(reply, Sessions)
+			reply = replyS
+			if parserErr != nil {
+				log.Println("Error while parsing the end message of the process")
+			}
+
 			if reply != "timeout" {
 				go sendMessage(wh.c, reply, message.Info.RemoteJid)
+
+				defer saveSession(savedSession, phone_number)
 			}
 		}
 
@@ -173,9 +176,14 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 				Sessions.CurrentQuestionSlug = sIndex+1
 			}
 
+			questionParsed, _, parserErr := processParser(coral.Process.Questions[sIndex].Question.Asking, Sessions)
+			if parserErr != nil {
+				log.Println("Error while parsing the end message of the process")
+			}
+
 			dataBaru := utils.Data{
 				Slug: coral.Process.Questions[sIndex].Question.Slug,
-				Question: coral.Process.Questions[sIndex].Question.Asking,
+				Question: questionParsed,
 				Answer: message.Text,
 				Created: time.Now().Format(time.RFC3339),
 			}
@@ -190,41 +198,6 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 			}
 
 			if sIndex >= (len(coral.Process.Questions)-1) {
-				formatCount := strings.Count(reply, "{{")
-				if formatCount > 0 {
-					for i := 0; i < formatCount; i++ {
-						slug := utils.Between(reply, "{{", "}}")
-
-						sumFunction := strings.Count(reply, "sum(")
-						
-						if sumFunction > 0 {
-							for i := 0; i < sumFunction; i++ {
-								sumSlug := utils.Between(reply, "sum(", ")")
-								clearsumSlug := strings.Replace(sumSlug, " ", "", -1)
-								slugs := strings.Split(clearsumSlug, ",")
-								calc := 0
-								for iSlug := range slugs{
-									for slugIndexs := range coral.Process.Questions {
-										if coral.Process.Questions[slugIndexs].Question.Slug == slugs[iSlug] {
-											number, _ := strconv.Atoi(Sessions.Datas[slugIndexs].Answer)
-											log.Println("add ",  number)
-											calc = calc + number
-										}
-									}						
-								}
-								reply = strings.Replace(reply, fmt.Sprintf("{{sum(%s)}}", sumSlug), strconv.Itoa(calc), -1)
-							}
-						}
-
-						for slugIndex := range coral.Process.Questions {
-							if coral.Process.Questions[slugIndex].Question.Slug == slug {
-								answer := Sessions.Datas[slugIndex].Answer
-								reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", slug), answer, -1)
-							}
-						}
-					}
-				}
-
 				if coral.Process.Record {
 					webhook := SentTo(coral.Webhook.Service, coral.Webhook.URL, Sessions)
 					if webhook {
@@ -235,13 +208,20 @@ func (wh *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 
 			if reply != "timeout" {
 				if Sessions.ProcessStatus != "WAIT_ANSWER" {
-					go sendMessage(wh.c, reply, message.Info.RemoteJid)
 
 					if Sessions.ProcessStatus != "DONE" {
 						Sessions.ProcessStatus = "WAIT_ANSWER"
 					}
 
 					defer saveSession(Sessions, phone_number)
+
+					replyS, _, parserErr := processParser(reply, Sessions)
+					reply = replyS
+					if parserErr != nil {
+						log.Println("Error while parsing the end message of the process")
+					}
+
+					go sendMessage(wh.c, reply, message.Info.RemoteJid)
 				}
 			}
 		}

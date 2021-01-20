@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	req "github.com/imroc/req"
-	"io/ioutil"
 	"strings"
 	"strconv"
 
@@ -29,86 +27,129 @@ var (
 // if no URL is found in pesan, pesan is returned as is
 // if URL is found, try POST request to url
 // currently only supports JSON response with message key
-func nemoParser(pesan string, Sessions utils.Session) (string, utils.CommonResponse, error) {
+func commandParser(reply string, Sessions utils.Session) (string, utils.CommonResponse, error) {
 	var commonResponse utils.CommonResponse
-	parameter := strings.Split(Sessions.Datas[0].Question, " ")
-	urlCount := strings.Count(pesan, "{{")
-	if urlCount == 0 {
-		return pesan, commonResponse, nil
+	var coral utils.Coral
+	coral.GetCoral(Sessions.CurrentProcess)
+
+	parameter := strings.Split(Sessions.Argument, " ")
+	formatCount := strings.Count(reply, "{{")
+	if formatCount == 0 {
+		return reply, commonResponse, nil
 	}
-	for i := 0; i < urlCount; i++ {
-		value := utils.Between(pesan, "{{", "}}")
+	for i := 0; i < formatCount; i++ {
+		value := utils.Between(reply, "{{", "}}")
 		httpCount := strings.Count(value, "http")
 		if httpCount > 0 {
 			r, err := req.Post(value, req.BodyJSON(Sessions))
 			if err != nil {
-				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), errReqErr(value), -1)
+				reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", value), errReqErr(value), -1)
 			}
 
 			r.ToJSON(&commonResponse)
 
-			pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), commonResponse.Message, -1)
+			reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", value), commonResponse.Message, -1)
 		}else{
 			if len(parameter) > 1 {
-				iindex, _ := strconv.Atoi(value)
-				replaceValue := parameter[iindex-1]
-				pesan = strings.Replace(pesan, fmt.Sprintf("{{%s}}", value), replaceValue, -1)
+				sumFunction := strings.Count(reply, "sum(")
+						
+				if sumFunction > 0 {
+					for i := 0; i < sumFunction; i++ {
+						sumIndex := utils.Between(reply, "sum(", ")")
+						clearsumIndex := strings.Replace(sumIndex, " ", "", -1)
+						indexing := strings.Split(clearsumIndex, ",")
+						calc := 0
+						for iindexing := range indexing{
+							parsingIndex, _ := strconv.Atoi(indexing[iindexing])
+							calcValue, _ := strconv.Atoi(parameter[parsingIndex-1])
+							calc = calc + calcValue
+						}
+						reply = strings.Replace(reply, fmt.Sprintf("{{sum(%s)}}", sumIndex), strconv.Itoa(calc), -1)
+					}
+				}else{
+					iindex, _ := strconv.Atoi(value)
+					replaceValue := parameter[iindex-1]
+					reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", value), replaceValue, -1)
+				}
 			}
 		}
 	}
 
-	return pesan, commonResponse, nil
+	return reply, commonResponse, nil
 }
 
-// lookupKey looks up if key exists in a map based on priority
-// return empty string if key is not supported
-// currently only supports first level key
-// might want to improve the algorithm
-// i.e return once a supported key is found with the assumption
-// that response body has commonly used keys to denote response message
-// it also does not care if the config sets multiple keys with the same
-// priority, it uses whichever is found first
-func lookupKey(m map[string]interface{}, sup map[string]int) string {
-	var key string
-	var prio int
-	for k, _ := range m {
-		for v, p := range sup {
-			if k != v {
+func processParser(reply string, Sessions utils.Session) (string, utils.CommonResponse, error) {
+	var commonResponse utils.CommonResponse
+	var coral utils.Coral
+	coral.GetCoral(Sessions.CurrentProcess)
+	formatCount := strings.Count(reply, "{{")
+	if formatCount > 0 {
+		for i := 0; i < formatCount; i++ {
+			slug := utils.Between(reply, "{{", "}}")
+			httpCount := strings.Count(slug, "http")
+
+			// fmt.Println("Trying to parse the ", slug)
+			
+			if httpCount > 0 {
+				r, err := req.Post(slug, req.BodyJSON(Sessions))
+				if err != nil {
+					reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", slug), errReqErr(slug), -1)
+				}
+	
+				r.ToJSON(&commonResponse)
+	
+				reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", slug), commonResponse.Message, -1)
+
 				continue
-			}
-			if key == "" {
-				key = v
-				prio = p
-				continue
-			} else if p < prio {
-				key = v
-				prio = p
-				continue
+
+			}else{
+				sumFunction := strings.Count(reply, "sum(")
+
+				slugIsNumber := false 
+				if _, err := strconv.Atoi(slug); err == nil {
+					parameter := strings.Split(Sessions.Argument, " ")
+					argIndex, _ := strconv.Atoi(slug)
+					replaceValue := parameter[argIndex-1]
+					reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", slug), replaceValue, -1)
+					slugIsNumber = true
+
+					continue
+				}
+
+				if sumFunction > 0 {
+					sumSlug := utils.Between(reply, "sum(", ")")
+					clearsumSlug := strings.Replace(sumSlug, " ", "", -1)
+					slugs := strings.Split(clearsumSlug, ",")
+					calc := 0
+					for iSlug := range slugs{
+						for slugIndexs := range coral.Process.Questions {
+							if coral.Process.Questions[slugIndexs].Question.Slug == slugs[iSlug] {
+								number, _ := strconv.Atoi(Sessions.Datas[slugIndexs].Answer)
+								calc = calc + number
+							}
+						}						
+					}
+
+					reply = strings.Replace(reply, fmt.Sprintf("{{sum(%s)}}", sumSlug), strconv.Itoa(calc), -1)
+
+					continue
+				}
+
+				if !slugIsNumber {
+					answer := "Can't Found"
+					for slugIndex := range coral.Process.Questions {						
+						if coral.Process.Questions[slugIndex].Question.Slug == slug {
+							answer = Sessions.Datas[slugIndex].Answer
+						}
+					}
+					reply = strings.Replace(reply, fmt.Sprintf("{{%s}}", slug), answer, -1)
+
+					continue
+				}
 			}
 		}
 	}
-	return key
+
+	return reply, commonResponse, nil
 }
 
-// supportKey sets up keys support from JSON config file
-// TODO validate config file
-func supportKey(file string) map[string]int {
-	kp := make(map[string]int)
-	if file == "" {
-		return defSupportedRespKeys
-	}
-	b, err := ioutil.ReadFile(file)
-	if err != nil {
-		return defSupportedRespKeys
-	}
-	var m map[string]interface{}
-	json.Unmarshal(b, &m)
-	for k, v := range m {
-		pp, ok := v.(float64)
-		if !ok {
-			continue
-		}
-		kp[k] = int(pp)
-	}
-	return kp
-}

@@ -11,21 +11,15 @@ import (
 	"github.com/eFishery/NeMo/utils"
 )
 
-func newSession(phone_number string, current_process string, timeout int) utils.Session{
+func newSession(Sessions utils.Session, timeout int) utils.Session{
 
-	savedSession := utils.Session {
-		PhoneNumber: phone_number,
-		CurrentProcess: current_process,
-		CurrentQuestionSlug: 0,
-		ProcessStatus: "WAIT_ANSWER",
-		Created: time.Now().Format(time.RFC3339),
-		Expired: time.Now().Add(time.Second * time.Duration(timeout)).Format(time.RFC3339),
-	}
+	Sessions.Created = time.Now().Format(time.RFC3339)
+	Sessions.Expired = time.Now().Add(time.Second * time.Duration(timeout)).Format(time.RFC3339)
 
-	file, _ := json.MarshalIndent(savedSession, "", " ")
-	_ = ioutil.WriteFile(utils.FileSession(phone_number), file, 0644)
+	file, _ := json.MarshalIndent(Sessions, "", " ")
+	defer ioutil.WriteFile(utils.FileSession(Sessions.PhoneNumber), file, 0644)
 
-	return savedSession
+	return Sessions
 }
 
 func loadSession(phone_number string) (utils.Session, error) {
